@@ -989,7 +989,7 @@
         <button class="btn-pause" onclick="togglePauseModal()">⏸️ 중간 결과 및 미체크 문제 확인 [P]</button>
         <button class="btn-reset" onclick="resetAll()">현재 카테고리 마킹 초기화 및 셔플 [R]</button>
 
-        <div class="shortcut-info">
+        <div class="shortcut-info" id="shortcutInfo">
           ⌨️ <b>단축키 안내:</b> Space (정답), 1/2/3 (채점), Q/E (이전/다음), V (영상 재생)<br>
           • <b>단축키 변경:</b> 영상 아래 [⚙️ 설정]에서 모든 단축키를 원하는 키로 바꿀 수 있습니다.<br>
           • <b>번호 범위 체크:</b> 좌측 상단에 시작과 끝 번호(예: 1~50)를 입력하고 [범위체크]를 누르면 한 번에 선택됩니다[cite: 11].
@@ -1212,6 +1212,27 @@
       try { shortcuts = { ...shortcutDefaults, ...JSON.parse(localStorage.getItem('signStudyShortcuts') || '{}') }; } catch (_) {}
     }
     function formatShortcut(key) { return key === ' ' ? 'Space' : (key.length === 1 ? key.toUpperCase() : key); }
+    function refreshShortcutHints() {
+      const buttonActions = [
+        ['button[onclick="toggleAnswer()"]', 'answer'], ['button[onclick="markCurrent(\'known\')"]', 'known'],
+        ['button[onclick="markCurrent(\'unknown\')"]', 'unknown'], ['button[onclick="markCurrent(\'review\')"]', 'review'],
+        ['button[onclick="markCurrent(\'none\')"]', 'uncheck'], ['button[onclick="prevWord()"]', 'previous'],
+        ['button[onclick="nextWord()"]', 'next'], ['button[onclick="toggleVideoPlayPause()"]', 'video'],
+        ['button[onclick="toggleMirrorMode()"]', 'mirror'], ['button[onclick="toggleHolisticWebcam()"]', 'webcam'],
+        ['button[onclick="speakCurrentWord()"]', 'tts'], ['button[onclick="toggleSettingsModal(true)"]', 'settings'],
+        ['button[onclick="toggleDescVisibility()"]', 'description'], ['button[onclick="togglePauseModal()"]', 'pause'],
+        ['button[onclick="resetAll()"]', 'reset'], ['button[onclick="startLearning()"]', 'restart'],
+        ['button[onclick="startReviewMode()"]', 'reviewMode'], ['button[onclick="returnToFullMode()"]', 'fullMode']
+      ];
+      buttonActions.forEach(([selector, action]) => document.querySelectorAll(selector).forEach(button => {
+        const base = button.textContent.replace(/\s*\[[^\]]+\]$/, '');
+        const hint = formatShortcut(shortcuts[action]);
+        button.textContent = `${base} [${hint}]`;
+        button.title = `${shortcutLabels[action]} 단축키: ${hint}`;
+      }));
+      const info = document.getElementById('shortcutInfo');
+      if (info) info.innerHTML = `⌨️ <b>단축키 안내:</b> ${formatShortcut(shortcuts.answer)} (정답), ${formatShortcut(shortcuts.known)}/${formatShortcut(shortcuts.unknown)}/${formatShortcut(shortcuts.review)} (채점), ${formatShortcut(shortcuts.previous)}/${formatShortcut(shortcuts.next)} (이전/다음), ${formatShortcut(shortcuts.video)} (영상 재생)<br>• <b>단축키 변경:</b> 영상 아래 [⚙️ 설정]에서 모든 단축키를 원하는 키로 바꿀 수 있습니다.<br>• <b>번호 범위 체크:</b> 좌측 상단에 시작과 끝 번호(예: 1~50)를 입력하고 [범위체크]를 누르면 한 번에 선택됩니다[cite: 11].`;
+    }
     function renderShortcutList() {
       const list = document.getElementById('shortcutList');
       if (!list) return;
@@ -1238,6 +1259,7 @@
       }
       localStorage.setItem('signStudyShortcuts', JSON.stringify(shortcuts));
       renderShortcutList();
+      refreshShortcutHints();
       showToast(`${shortcutLabels[action]}: ${formatShortcut(shortcuts[action])}`);
       return true;
     }
@@ -2362,6 +2384,11 @@
       showToast("🏠 전체 학습 모드로 복귀했습니다.");
     }
 
+    // 버튼의 상태 문구가 바뀌어도 단축키 표시는 항상 최신 설정으로 다시 붙입니다.
+    document.addEventListener('click', event => {
+      if (event.target.closest('button')) setTimeout(refreshShortcutHints, 0);
+    });
+
     document.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -2390,6 +2417,7 @@
 
     window.onload = () => {
       loadShortcuts();
+      refreshShortcutHints();
       initCategorySelector();
       createNewTab();
       initMobileResizer();
