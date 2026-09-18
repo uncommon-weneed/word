@@ -654,6 +654,7 @@
       gap: 16px;
       animation: popIn 0.2s ease-out forwards;
       box-sizing: border-box;
+      max-height: calc(100vh - 32px);
     }
     .settings-header {
       display: flex;
@@ -686,6 +687,8 @@
       flex-direction: column;
       gap: 12px;
       text-align: left;
+      overflow-y: auto;
+      padding-right: 4px;
     }
     .settings-group {
       background: #f8fafc;
@@ -720,6 +723,10 @@
       background: #ffffff;
       outline: none;
     }
+    .shortcut-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+    .shortcut-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.76rem; color: #475569; }
+    .shortcut-item button { min-width: 46px; padding: 5px 6px; border: 1px solid #a5b4fc; border-radius: 6px; background: #eef2ff; color: #3730a3; font-weight: 800; cursor: pointer; }
+    .shortcut-item button.is-capturing { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
     .btn-save-settings {
       background: #4f46e5;
       color: #ffffff;
@@ -983,8 +990,8 @@
         <button class="btn-reset" onclick="resetAll()">현재 카테고리 마킹 초기화 및 셔플 [R]</button>
 
         <div class="shortcut-info">
-          ⌨️ <b>단축키 안내:</b> 1/A (아는), 2/S (모름), 3/D (재확인) | Space/W (정답 열기) | Q/E (이전/다음)<br>
-          • <b>모드 전환:</b> [O] 오답노트 진입, [I] 전체메뉴 복귀 <br>
+          ⌨️ <b>단축키 안내:</b> Space (정답), 1/2/3 (채점), Q/E (이전/다음), V (영상 재생)<br>
+          • <b>단축키 변경:</b> 영상 아래 [⚙️ 설정]에서 모든 단축키를 원하는 키로 바꿀 수 있습니다.<br>
           • <b>번호 범위 체크:</b> 좌측 상단에 시작과 끝 번호(예: 1~50)를 입력하고 [범위체크]를 누르면 한 번에 선택됩니다[cite: 11].
         </div>
       </div>
@@ -1112,6 +1119,13 @@
             <label><input type="checkbox" id="autoPlayTts"> 단어 이동 시 자동으로 음성 듣기</label>
           </div>
         </div>
+
+        <!-- 5. 단축키 설정 -->
+        <div class="settings-group">
+          <div class="settings-group-title">⌨️ 단축키 설정</div>
+          <div id="shortcutList" class="shortcut-list"></div>
+          <div style="font-size:0.72rem;color:#64748b;">기능 옆 키를 누른 뒤 원하는 키를 입력하세요. Esc는 취소, Backspace/Delete는 기본값으로 복원합니다.</div>
+        </div>
       </div>
 
       <button class="btn-save-settings" onclick="toggleSettingsModal(false)">설정 완료 및 닫기</button>
@@ -1178,6 +1192,64 @@
     let isVideoPlaying = true;
     let targetVideoLoopCount = 999;
     let currentVideoPlayCount = 0;
+    let currentVideoSession = 0;
+
+    // 단축키는 브라우저에 저장되며, 화면의 버튼 기능과 같은 함수를 호출합니다.
+    const shortcutDefaults = {
+      answer: ' ', known: '1', unknown: '2', review: '3', uncheck: '0', previous: 'q', next: 'e',
+      video: 'v', mirror: 'm', webcam: 'c', tts: 't', settings: 'g', description: 'h',
+      pause: 'p', reset: 'r', restart: 'n', reviewMode: 'o', fullMode: 'i'
+    };
+    const shortcutLabels = {
+      answer: '정답 열기', known: '아는 문제', unknown: '모르는 문제', review: '재확인', uncheck: '체크 해제', previous: '이전', next: '다음',
+      video: '영상 재생', mirror: '거울 반전', webcam: '동작 캠', tts: '발음 듣기', settings: '설정', description: '설명창',
+      pause: '중간 결과', reset: '초기화', restart: '새 학습', reviewMode: '오답노트', fullMode: '전체 학습'
+    };
+    let shortcuts = { ...shortcutDefaults };
+    let capturingShortcut = null;
+
+    function loadShortcuts() {
+      try { shortcuts = { ...shortcutDefaults, ...JSON.parse(localStorage.getItem('signStudyShortcuts') || '{}') }; } catch (_) {}
+    }
+    function formatShortcut(key) { return key === ' ' ? 'Space' : (key.length === 1 ? key.toUpperCase() : key); }
+    function renderShortcutList() {
+      const list = document.getElementById('shortcutList');
+      if (!list) return;
+      list.innerHTML = Object.keys(shortcutDefaults).map(action => `<div class="shortcut-item"><span>${shortcutLabels[action]}</span><button type="button" data-shortcut-action="${action}" onclick="beginShortcutCapture('${action}')">${formatShortcut(shortcuts[action])}</button></div>`).join('');
+    }
+    function beginShortcutCapture(action) {
+      capturingShortcut = action;
+      renderShortcutList();
+      const button = document.querySelector(`#shortcutList button[data-shortcut-action="${action}"]`);
+      if (button) { button.textContent = '입력…'; button.classList.add('is-capturing'); button.focus(); }
+    }
+    function captureShortcut(event) {
+      if (!capturingShortcut) return false;
+      event.preventDefault();
+      const action = capturingShortcut;
+      capturingShortcut = null;
+      if (event.key === 'Escape') { renderShortcutList(); return true; }
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        shortcuts[action] = shortcutDefaults[action];
+      } else {
+        const duplicate = Object.entries(shortcuts).find(([name, key]) => name !== action && key.toLowerCase() === event.key.toLowerCase());
+        if (duplicate) { showToast(`${shortcutLabels[duplicate[0]]}에 이미 지정된 키입니다.`); renderShortcutList(); return true; }
+        shortcuts[action] = event.key;
+      }
+      localStorage.setItem('signStudyShortcuts', JSON.stringify(shortcuts));
+      renderShortcutList();
+      showToast(`${shortcutLabels[action]}: ${formatShortcut(shortcuts[action])}`);
+      return true;
+    }
+    function runShortcut(action) {
+      const actions = {
+        answer: () => toggleAnswer(), known: () => markCurrent('known'), unknown: () => markCurrent('unknown'), review: () => markCurrent('review'), uncheck: () => markCurrent('none'),
+        previous: () => prevWord(), next: () => nextWord(), video: () => toggleVideoPlayPause(), mirror: () => toggleMirrorMode(), webcam: () => toggleHolisticWebcam(),
+        tts: () => speakCurrentWord(), settings: () => toggleSettingsModal(true), description: () => toggleDescVisibility(), pause: () => togglePauseModal(),
+        reset: () => resetAll(), restart: () => startLearning(), reviewMode: () => startReviewMode(), fullMode: () => returnToFullMode()
+      };
+      if (actions[action]) actions[action]();
+    }
 
     // 순수 웹캠 제어 변수
     let webcamStream = null;
@@ -1203,6 +1275,7 @@
       const modal = document.getElementById('settingsModal');
       if (!modal) return;
       modal.style.display = show ? 'flex' : 'none';
+      if (show) renderShortcutList();
       if (!show) showToast("설정이 저장되었습니다.");
     }
 
@@ -1479,7 +1552,18 @@
 
     function changeVideoLoopCount(val) {
       targetVideoLoopCount = parseInt(val) || 999;
+      startVideoForCurrentWord();
+    }
+
+    // 새 단어의 영상은 언제나 새 반복 세션으로 시작합니다.
+    function startVideoForCurrentWord() {
+      const vid = document.querySelector('#dictMediaTarget video');
+      if (!vid) return;
+      currentVideoSession++;
       currentVideoPlayCount = 0;
+      isVideoPlaying = true;
+      vid.loop = false;
+      try { vid.currentTime = 0; } catch (_) {}
       applyVideoStyles();
     }
 
@@ -1492,9 +1576,11 @@
       if (isMirrored) vid.classList.add('mirrored');
       else vid.classList.remove('mirrored');
 
+      const session = currentVideoSession;
       vid.onended = () => {
+        if (session !== currentVideoSession) return;
         currentVideoPlayCount++;
-        if (currentVideoPlayCount < targetVideoLoopCount) {
+        if (targetVideoLoopCount >= 999 || currentVideoPlayCount < targetVideoLoopCount) {
           vid.play();
         } else {
           vid.pause();
@@ -1502,8 +1588,8 @@
           if (btn) btn.innerText = "▶️ 재생";
         }
       };
-      if (targetVideoLoopCount >= 999) vid.loop = true;
-      else vid.loop = false;
+      // loop=true면 ended 이벤트가 발생하지 않아 횟수를 셀 수 없습니다.
+      vid.loop = false;
 
       if (isVideoPlaying) {
         vid.play().catch(() => {});
@@ -2038,9 +2124,8 @@
         detailContent.innerHTML = `<div style="color:#64748b; font-size:1rem; font-weight:600;">[Space] 또는 [정답] 버튼을 누르면 상세 설명이 열립니다.</div>`;
       } else {
         if (vidSrc) {
-          dictMediaTarget.innerHTML = `<video src="${vidSrc}" autoplay loop muted playsinline></video>`;
-          currentVideoPlayCount = 0;
-          applyVideoStyles();
+          dictMediaTarget.innerHTML = `<video src="${vidSrc}" autoplay muted playsinline></video>`;
+          startVideoForCurrentWord();
         } else {
           dictMediaTarget.innerHTML = `<div style="color:#ef4444; font-weight:bold;">등록된 표준 수어 영상이 없습니다.</div>`;
         }
@@ -2280,7 +2365,7 @@
     document.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
 
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !capturingShortcut) {
         toggleSettingsModal(false);
         const pModal = document.getElementById('pauseModal');
         if (pModal) pModal.style.display = 'none';
@@ -2298,28 +2383,13 @@
         return;
       }
 
-      const k = e.key.toLowerCase();
-
-      if (e.key === ' ' || k === 'w') { 
-        e.preventDefault(); 
-        toggleAnswer(); 
-        return; 
-      }
-
-      if (k === '1' || k === 'a') { e.preventDefault(); markCurrent('known'); }
-      if (k === '2' || k === 's') { e.preventDefault(); markCurrent('unknown'); }
-      if (k === '3' || k === 'd') { e.preventDefault(); markCurrent('review'); }
-      if (k === 'q') prevWord();
-      if (k === 'e') nextWord();
-      if (k === 'p') togglePauseModal();
-      if (k === 'r') resetAll();
-      if (k === 'n') startLearning();
-      
-      if (k === 'o') startReviewMode();
-      if (k === 'i') returnToFullMode();
+      if (captureShortcut(e)) return;
+      const action = Object.keys(shortcuts).find(name => shortcuts[name].toLowerCase() === e.key.toLowerCase());
+      if (action) { e.preventDefault(); runShortcut(action); }
     });
 
     window.onload = () => {
+      loadShortcuts();
       initCategorySelector();
       createNewTab();
       initMobileResizer();

@@ -2,11 +2,17 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>수어 단어 무한 셔플 & 오답노트 암기장</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>수어 단어 무한 셔플 & 오답노트 암기장 (번호 범위 선택 포함)</title>
+
   <style>
     :root {
-      --img-scale: 1;
+      --vp-height: 340px;
+    }
+
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
     }
 
     body { 
@@ -17,25 +23,179 @@
       min-height: 100vh; 
       background: #f1f5f9; 
       margin: 0; 
-      padding: 20px 0 0 0; 
+      padding: 0; 
       box-sizing: border-box; 
     }
     
+    /* 1. 시작 화면 (독립 분리형 페이지) */
+    #welcomeScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 5000;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .welcome-card {
+      background: #ffffff;
+      padding: 40px 28px;
+      border-radius: 26px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+      box-sizing: border-box;
+      animation: popIn 0.25s ease-out;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .welcome-badge {
+      display: inline-block;
+      background: #e0e7ff;
+      color: #4338ca;
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .welcome-title {
+      margin: 0 0 16px 0;
+      color: #0f172a;
+      font-size: 1.45rem;
+      font-weight: 800;
+    }
+    .welcome-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .welcome-mode-select {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .btn-mode-choice {
+      padding: 15px 12px;
+      border-radius: 14px;
+      border: 2px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .btn-mode-choice.active {
+      border-color: #6366f1;
+      background: #eff6ff;
+      color: #4338ca;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    }
+    .btn-start-app {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      color: white;
+      width: 100%;
+      padding: 16px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      border-radius: 14px;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+      transition: all 0.15s;
+    }
+    .btn-start-app:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    /* 2. 메인 애플리케이션 래퍼 */
+    #mainApp {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 상단 멀티 탭 UI */
+    .tab-bar {
+      width: 100%;
+      display: flex;
+      background: #cbd5e1;
+      padding: 10px 14px 0 14px;
+      gap: 6px;
+      box-sizing: border-box;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab {
+      padding: 10px 16px;
+      background: #94a3b8;
+      border-radius: 12px 12px 0 0;
+      cursor: pointer;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      transition: 0.15s;
+      flex-shrink: 0;
+    }
+    .tab:hover { background: #cbd5e1; color: #334155; }
+    .tab.active { background: #f1f5f9; color: #0f172a; }
+    .tab-add {
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #4f46e5;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .tab-add:hover { color: #3730a3; }
+    .tab-close {
+      color: #ef4444;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-radius: 50%;
+      padding: 2px 6px;
+    }
+    .tab-close:hover { background: #fee2e2; }
+
     .app-wrapper { 
       display: flex; 
-      gap: 20px; 
-      width: 95%; 
-      max-width: 1180px; 
+      gap: 16px; 
+      width: 96%; 
+      max-width: 1560px;
       align-items: flex-start; 
-      margin-bottom: 30px; 
+      margin-top: 16px;
+      margin-bottom: 24px; 
+      box-sizing: border-box;
     }
 
     /* 사이드바 */
-    .sidebar { width: 280px; background: #fff; padding: 18px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); max-height: 88vh; display: flex; flex-direction: column; flex-shrink: 0; box-sizing: border-box; }
+    .sidebar { width: 300px; background: #fff; padding: 16px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); max-height: 88vh; display: flex; flex-direction: column; flex-shrink: 0; box-sizing: border-box; }
     .sidebar-header { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
     .sidebar-header span { font-size: 0.8rem; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 10px; }
     
-    /* 카테고리 선택 */
     .category-box { background: #eff6ff; padding: 10px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #bfdbfe; display: flex; flex-direction: column; gap: 6px; }
     .category-box label { font-size: 0.8rem; font-weight: 700; color: #1e40af; }
     .select-cat { width: 100%; padding: 7px 8px; border-radius: 8px; border: 1.5px solid #3b82f6; background: #fff; font-size: 0.85rem; font-weight: 700; color: #1e293b; outline: none; cursor: pointer; }
@@ -44,115 +204,407 @@
     .sidebar-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; font-size: 0.85rem; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0; }
     .sidebar-controls input[type="text"] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 0.85rem; width: 100%; box-sizing: border-box; }
     .sidebar-controls input[type="text"]:focus { border-color: #6366f1; }
+    
+    .range-select-box { display: flex; gap: 4px; align-items: center; background: #f8fafc; padding: 6px; border-radius: 8px; border: 1px solid #cbd5e1; }
+    .range-select-box input { width: 65px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 0.8rem; outline: none; }
+    .range-select-box button { padding: 4px 8px; background: #3b82f6; color: #fff; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .range-select-box button:hover { background: #2563eb; }
+
+    /* 마스킹 & 정렬 버튼 그룹 */
+    .sidebar-opt-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 0.78rem; color: #475569; background: #f8fafc; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .toggle-hide-container { display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: 700; color: #334155; }
+    .sidebar-order-group { display: flex; gap: 4px; }
+    .btn-order-toggle { border: 1px solid #cbd5e1; background: #fff; color: #475569; border-radius: 6px; padding: 3px 7px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.15s; }
+    .btn-order-toggle.active { background: #3b82f6; color: #fff; border-color: #2563eb; }
+
     .sidebar-actions { display: flex; gap: 5px; }
     .sidebar-actions button { flex: 1; padding: 6px 4px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; transition: 0.15s; }
     .btn-select { background: #e2e8f0; color: #334155; }
     .btn-select:hover { background: #cbd5e1; }
     .btn-study-custom { background: #6366f1; color: #fff; flex: 1.2; }
     .btn-study-custom:hover { background: #4f46e5; }
-    
-    .sidebar-opt-row { display: flex; justify-content: space-between; align-items: center; gap: 4px; font-size: 0.78rem; color: #475569; }
-    .toggle-hide-container { display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: 600; }
-    .select-order { padding: 3px 6px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.75rem; outline: none; color: #334155; }
 
     .sidebar-list { overflow-y: auto; flex: 1; padding-right: 4px; user-select: none; position: relative; }
-    .sidebar-item { padding: 6px 8px; border-radius: 8px; margin-bottom: 4px; font-size: 0.85rem; display: flex; align-items: center; background: #f8fafc; transition: all 0.15s ease; border: 1px solid transparent; }
-    .sidebar-item:hover { background: #e2e8f0; }
+    .sidebar-item { padding: 7px 8px; border-radius: 10px; margin-bottom: 5px; font-size: 0.85rem; display: flex; align-items: center; background: #f8fafc; transition: all 0.15s ease; border: 1px solid #e2e8f0; gap: 4px; }
+    .sidebar-item:hover { background: #f1f5f9; }
     .sidebar-item.active { background: #e0e7ff; border-color: #6366f1; font-weight: 700; color: #4338ca; }
     
-    .checkbox-wrap { padding: 4px 6px 4px 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .word-text { flex: 1; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 4px 0; transition: filter 0.2s, opacity 0.2s; }
-    .word-text.blurred { filter: blur(4.5px); opacity: 0.4; }
-    .eye-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0 6px; margin: 0; outline: none; transition: transform 0.1s; }
-    .eye-btn:hover { transform: scale(1.15); }
+    .checkbox-wrap { padding: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .word-text { flex: 1; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 3px 2px; transition: filter 0.2s, opacity 0.2s; }
+    .word-text.blurred { filter: blur(5px); opacity: 0.35; }
     
-    .sidebar-badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 5px; font-weight: bold; margin-left: 4px; flex-shrink: 0; cursor: pointer; transition: 0.15s; }
-    .sidebar-badge:hover { filter: brightness(0.92); transform: scale(1.05); }
+    .mask-box-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .mask-box-btn:hover { transform: scale(1.04); filter: brightness(0.96); }
+    .mask-box-btn.hidden-mode { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+    .mask-box-btn.visible-mode { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
+    
+    .sidebar-badge { font-size: 0.68rem; padding: 3px 7px; border-radius: 6px; font-weight: bold; flex-shrink: 0; cursor: pointer; transition: 0.15s; }
     .badge-none { background: #e2e8f0; color: #64748b; }
     .badge-known { background: #dcfce7; color: #15803d; }
     .badge-unknown { background: #fee2e2; color: #b91c1c; }
     .badge-review { background: #fef3c7; color: #b45309; }
 
-    /* 모바일 높이 조절 바 */
-    .resizer-bar {
-      display: none;
-      width: 100%;
-      height: 22px;
-      cursor: row-resize;
-      user-select: none;
-      touch-action: none;
-      align-items: center;
-      justify-content: center;
-      margin: -4px 0;
-      z-index: 10;
-    }
-    .resizer-pill {
-      width: 54px;
-      height: 6px;
-      background: #94a3b8;
-      border-radius: 4px;
-      transition: background 0.15s, transform 0.15s;
-    }
-    .resizer-bar:hover .resizer-pill,
-    .resizer-bar.dragging .resizer-pill {
-      background: #4f46e5;
-      transform: scaleY(1.3);
-    }
+    /* 모바일 리사이저 */
+    .resizer-bar { display: none; width: 100%; height: 20px; cursor: row-resize; user-select: none; touch-action: none; align-items: center; justify-content: center; margin: -2px 0; z-index: 10; }
+    .resizer-pill { width: 54px; height: 6px; background: #94a3b8; border-radius: 4px; }
 
     /* 메인 카드 */
-    .card-container { background: #fff; padding: 24px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); flex: 1; text-align: center; position: relative; min-width: 0; }
-    .mode-badge-wrap { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-    .mode-badge { display: inline-block; background: #e0e7ff; color: #4338ca; font-weight: 700; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; }
+    .card-container { background: #fff; padding: 24px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); flex: 1; text-align: center; position: relative; min-width: 0; box-sizing: border-box; width: 100%; }
+    
+    /* 최상단 모드 배치 영역 */
+    .mode-badge-wrap { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .mode-badge { display: inline-block; background: #e0e7ff; color: #4338ca; font-weight: 700; padding: 5px 14px; border-radius: 14px; font-size: 0.85rem; }
     .mode-badge.review { background: #fef3c7; color: #b45309; }
     .mode-badge.custom { background: #dcfce7; color: #15803d; }
-    .mode-badge.vocab { background: #f3e8ff; color: #7e22ce; }
     
+    .top-mode-switch-group {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 12px;
+      gap: 3px;
+    }
+    .btn-mode-pill {
+      border: none;
+      background: transparent;
+      color: #475569;
+      padding: 4px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-mode-pill.active {
+      background: #6366f1;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+    }
+
     .progress-bar { font-size: 0.95rem; font-weight: 600; color: #64748b; margin-bottom: 12px; }
     
-    .stats-summary { display: flex; justify-content: space-around; background: #f8fafc; padding: 10px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; }
+    .stats-summary { display: flex; justify-content: space-around; background: #f8fafc; padding: 10px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px; }
     .stat-known { color: #16a34a; }
     .stat-unknown { color: #dc2626; }
     .stat-review { color: #d97706; }
 
-    /* 상단 제어바 */
-    .top-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; justify-content: center; }
-    .control-box { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: #475569; background: #f8fafc; padding: 7px 10px; border-radius: 10px; border: 1px solid #e2e8f0; }
+    /* 최상단 단어 배너 */
+    .top-word-banner-wrapper {
+      position: relative;
+      width: 100%;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-word-banner {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-bottom: none;
+      border-radius: 14px 14px 0 0;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-sizing: border-box;
+      width: 100%;
+      gap: 12px;
+      min-height: 100px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .top-word-banner-resizer {
+      width: 100%;
+      height: 14px;
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      border-top: 1px dashed #cbd5e1;
+      border-radius: 0 0 14px 14px;
+      cursor: row-resize;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      touch-action: none;
+    }
+    .top-word-banner-resizer::after {
+      content: '';
+      width: 40px;
+      height: 4px;
+      background: #94a3b8;
+      border-radius: 2px;
+    }
+
+    .top-word-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      word-break: break-all;
+    }
+    .quick-mark-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+    .q-mark {
+      padding: 6px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: #ffffff;
+      transition: 0.15s;
+      flex: 1;
+      max-width: 90px;
+      min-width: 60px;
+    }
+    .q-mark:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .q-mark.known { color: #16a34a; border-color: #22c55e; }
+    .q-mark.known.active { background: #22c55e; color: #fff; }
+    .q-mark.unknown { color: #dc2626; border-color: #ef4444; }
+    .q-mark.unknown.active { background: #ef4444; color: #fff; }
+    .q-mark.review { color: #d97706; border-color: #f59e0b; }
+    .q-mark.review.active { background: #f59e0b; color: #fff; }
+    .q-mark.uncheck { color: #64748b; border-color: #94a3b8; }
+    .q-mark.uncheck.active { background: #94a3b8; color: #fff; }
+
+    /* 듀얼 뷰포트 래퍼 및 영상 영역 */
+    .viewport-wrapper {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 12px;
+    }
+    .dual-viewport-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    @media (min-width: 1024px) {
+      .dual-viewport-grid.dual-active {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .viewport-box {
+      width: 100%;
+      height: var(--vp-height);
+      max-height: 80vh;
+      background: #0f172a;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #cbd5e1;
+      border-bottom: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      box-sizing: border-box;
+    }
+    .viewport-box.webcam-live { border-color: #6366f1; }
+    .viewport-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    #mpVideoFeed {
+      transform: scaleX(-1);
+    }
+
+    .vp-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(4px);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      z-index: 10;
+    }
+
+    /* 영상 바로 아래 드래그 조절바 */
+    .viewport-resizer {
+      width: 100%;
+      height: 16px;
+      background: #f1f5f9;
+      border: 2px solid #cbd5e1;
+      border-top: 1px dashed #94a3b8;
+      border-radius: 0 0 14px 14px;
+      cursor: row-resize;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      touch-action: none;
+    }
+    .viewport-resizer::after {
+      content: '';
+      width: 40px;
+      height: 4px;
+      background: #94a3b8;
+      border-radius: 2px;
+    }
+
+    /* 영상 아래 중간 통합 제어바 */
+    .mid-action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+    }
+    .mid-controls-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn-action-tool {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-action-tool:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+    .btn-action-tool.active {
+      background: #6366f1;
+      color: #ffffff;
+      border-color: #4f46e5;
+    }
+    .btn-action-tool.cam-btn {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .btn-action-tool.tts-btn {
+      background: #fefce8;
+      border-color: #fde047;
+      color: #854d0e;
+    }
+    .btn-action-tool.settings-btn {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      border: none;
+    }
+
+    .desc-toggle-btn {
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .desc-toggle-btn:hover { background: #cbd5e1; color: #1e293b; }
+
+    /* 하단 설명 컨테이너 */
+    .detail-wrapper {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
     
-    /* 모드 전환 스위치 박스 */
-    .type-switch-box { background: #f8fafc; border-color: #cbd5e1; }
-    .btn-type-toggle { border: 1px solid #cbd5e1; background: #fff; color: #475569; border-radius: 6px; padding: 4px 9px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: 0.15s; }
-    .btn-type-toggle.active { background: #6366f1; color: #fff; border-color: #4f46e5; }
-
-    .timer-reveal-box { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
-    .timer-reveal-box select { border: 1px solid #86efac; border-radius: 4px; outline: none; padding: 2px 4px; font-size: 0.8rem; background: #fff; }
+    .detail-container {
+      height: 120px;
+      overflow-y: auto;
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      border: 2px dashed #cbd5e1; 
+      border-bottom: none;
+      border-radius: 14px 14px 0 0; 
+      padding: 16px; 
+      word-break: keep-all; 
+      line-height: 1.5; 
+      background: #fff; 
+      box-sizing: border-box; 
+      width: 100%;
+      -webkit-overflow-scrolling: touch;
+    }
     
-    .timer-next-box { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-    .timer-next-box select { border: 1px solid #fca5a5; border-radius: 4px; outline: none; padding: 2px 4px; font-size: 0.8rem; background: #fff; }
-    
-    .timer-badge { display: inline-block; min-width: 38px; font-size: 0.85rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; text-align: center; }
-    .badge-reveal-cd { background: #dcfce7; color: #15803d; }
-    .badge-next-cd { background: #fee2e2; color: #b91c1c; }
+    .detail-resizer {
+      width: 100%;
+      height: 16px;
+      background: #f1f5f9;
+      border: 2px dashed #cbd5e1;
+      border-top: 1px solid #e2e8f0;
+      border-radius: 0 0 14px 14px;
+      cursor: row-resize;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      touch-action: none;
+    }
+    .detail-resizer::after {
+      content: '';
+      width: 40px;
+      height: 4px;
+      background: #94a3b8;
+      border-radius: 2px;
+    }
 
-    .order-box { background: #eff6ff; border-color: #bfdbfe; }
-    .btn-order-toggle { border: 1px solid #93c5fd; background: #fff; color: #1e40af; border-radius: 6px; padding: 3px 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: 0.15s; }
-    .btn-order-toggle.active { background: #3b82f6; color: #fff; border-color: #2563eb; }
+    /* 설명창 숨김 클래스 */
+    .detail-container.collapsed,
+    .detail-resizer.collapsed {
+      display: none !important;
+    }
 
-    .word-box { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 15px; border: 2px dashed #cbd5e1; border-radius: 14px; padding: 18px; position: relative; word-break: keep-all; line-height: 1.5; }
-    .status-tag { position: absolute; top: 10px; right: 10px; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; font-weight: bold; }
-    .tag-known { background: #dcfce7; color: #15803d; }
-    .tag-unknown { background: #fee2e2; color: #b91c1c; }
-    .tag-review { background: #fef3c7; color: #b45309; }
+    .answer-container { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
+    .desc-text { font-size: 0.95rem; font-weight: 500; color: #334155; background: #f8fafc; padding: 12px 14px; border-radius: 10px; box-sizing: border-box; line-height: 1.55; border: 1px solid #e2e8f0; }
 
-    .answer-container { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; width: 100%; text-align: left; }
-    .desc-text { font-size: 0.95rem; font-weight: 500; color: #334155; background: #f8fafc; padding: 14px; border-radius: 10px; box-sizing: border-box; line-height: 1.55; border: 1px solid #e2e8f0; }
-    
-    .img-container { display: flex; gap: 15px; justify-content: center; width: 100%; flex-wrap: wrap; margin-top: 10px; }
-    .img-box { width: calc(260px * var(--img-scale)); height: calc(195px * var(--img-scale)); max-width: 100%; background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; padding: 6px; box-sizing: border-box; box-shadow: 0 3px 8px rgba(0,0,0,0.06); transition: width 0.2s ease, height 0.2s ease; }
-    .img-box img, .img-box video { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    .mirrored { transform: scaleX(-1) !important; }
 
-    /* 국립국어원 사전 웹페이지 바로가기 버튼 */
-    .dict-link-wrap { text-align: center; margin-top: 12px; }
-    .dict-link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 0.88rem; font-weight: 700; box-shadow: 0 3px 6px rgba(79, 70, 229, 0.25); transition: 0.15s ease; }
+    .dict-link-wrap { text-align: center; margin-top: 4px; }
+    .dict-link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 0.85rem; font-weight: 700; box-shadow: 0 3px 6px rgba(79, 70, 229, 0.25); transition: 0.15s ease; }
     .dict-link-btn:hover { background: #4338ca; transform: translateY(-1px); }
 
     .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
@@ -177,151 +629,156 @@
     .shortcut-info { margin-top: 15px; font-size: 0.78rem; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 8px; text-align: left; line-height: 1.5; }
     .shortcut-info b { color: #334155; }
 
-    /* 환영 / 시작 대시보드 오버레이 */
-    .welcome-overlay {
+    /* 통합 환경설정 모달 창 */
+    .settings-modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.82);
-      backdrop-filter: blur(5px);
-      display: flex;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(6px);
+      display: none;
       justify-content: center;
       align-items: center;
-      z-index: 2000;
+      z-index: 3000;
       padding: 16px;
       box-sizing: border-box;
     }
-    .welcome-card {
+    .settings-modal-card {
       background: #ffffff;
-      padding: 34px 28px;
-      border-radius: 24px;
-      max-width: 520px;
+      padding: 26px 22px;
+      border-radius: 22px;
+      max-width: 480px;
       width: 100%;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      animation: popIn 0.3s ease-out forwards;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: popIn 0.2s ease-out forwards;
+      box-sizing: border-box;
     }
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.92); }
-      to { opacity: 1; transform: scale(1); }
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 12px;
     }
-    .welcome-badge {
-      display: inline-block;
-      background: #e0e7ff;
-      color: #4338ca;
-      font-size: 0.8rem;
-      font-weight: 800;
-      padding: 4px 14px;
-      border-radius: 20px;
-      margin-bottom: 12px;
-    }
-    .welcome-title {
-      margin: 0 0 14px 0;
-      color: #0f172a;
-      font-size: 1.45rem;
-      font-weight: 800;
-      line-height: 1.4;
-    }
-    .welcome-quote-box {
-      background: #f8fafc;
-      border-left: 4px solid #6366f1;
-      padding: 14px 16px;
-      border-radius: 0 12px 12px 0;
-      margin-bottom: 22px;
-      text-align: left;
-    }
-    .welcome-quote {
+    .settings-header h3 {
       margin: 0;
-      font-size: 0.95rem;
-      color: #334155;
-      font-weight: 600;
-      line-height: 1.6;
-      word-break: keep-all;
+      font-size: 1.2rem;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .welcome-options {
+    .settings-close-x {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .settings-close-x:hover { color: #0f172a; background: #f1f5f9; }
+
+    .settings-grid {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-bottom: 22px;
       text-align: left;
     }
-    .welcome-label {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: #475569;
-    }
-    .welcome-mode-select {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .btn-mode-choice {
-      padding: 12px 10px;
-      border-radius: 12px;
-      border: 2px solid #e2e8f0;
+    .settings-group {
       background: #f8fafc;
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: #475569;
-      cursor: pointer;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s;
+      gap: 8px;
     }
-    .btn-mode-choice span {
-      font-size: 0.72rem;
-      font-weight: normal;
-      color: #64748b;
-    }
-    .btn-mode-choice.active {
-      border-color: #6366f1;
-      background: #eff6ff;
-      color: #4338ca;
-    }
-    .btn-mode-choice.active span {
-      color: #4f46e5;
-    }
-    .btn-start-app {
-      background: #4f46e5;
-      color: white;
-      width: 100%;
-      padding: 15px;
-      font-size: 1.05rem;
+    .settings-group-title {
+      font-size: 0.85rem;
       font-weight: 800;
-      border-radius: 14px;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: #475569;
+      font-weight: 600;
+    }
+    .settings-row select {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.82rem;
+      background: #ffffff;
+      outline: none;
+    }
+    .btn-save-settings {
+      background: #4f46e5;
+      color: #ffffff;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 800;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: 0.15s;
     }
-    .btn-start-app:hover {
-      background: #4338ca;
-      transform: translateY(-2px);
-    }
+    .btn-save-settings:hover { background: #4338ca; }
 
-    /* 중간 결과 모달 */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: #fff; padding: 24px; border-radius: 20px; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.15); }
-    .modal-content h2 { margin-top: 0; color: #0f172a; font-size: 1.25rem; }
+    /* 중간 결과 및 최종 결과 모달 */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 2500; }
+    .modal-content { background: #fff; padding: 24px; border-radius: 20px; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 20px 45px rgba(0,0,0,0.2); }
     .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 12px; margin: 15px 0; text-align: left; font-size: 0.9rem; }
-    .modal-unchecked-box { background: #fee2e2; border-radius: 8px; padding: 10px; max-height: 100px; overflow-y: auto; text-align: left; font-size: 0.82rem; color: #991b1b; margin-bottom: 15px; word-break: break-all; line-height: 1.4; }
-    .btn-resume { background: #6366f1; color: white; width: 100%; padding: 12px; font-size: 0.95rem; }
+    .modal-unchecked-box { background: #fee2e2; border-radius: 8px; padding: 10px; max-height: 100px; overflow-y: auto; text-align: left; font-size: 0.82rem; color: #991b1b; margin-bottom: 15px; }
+    .btn-resume { background: #6366f1; color: white; width: 100%; padding: 12px; font-size: 0.95rem; border-radius: 10px; }
 
-    /* 출처 표기 반응형 푸터 */
+    /* 토스트 알림 UI */
+    #toast {
+      visibility: hidden;
+      min-width: 220px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(6px);
+      color: #ffffff;
+      text-align: center;
+      border-radius: 12px;
+      padding: 12px 20px;
+      position: fixed;
+      z-index: 9999;
+      left: 50%;
+      bottom: 36px;
+      transform: translateX(-50%) translateY(20px);
+      font-size: 0.88rem;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 출처 표기 푸터 */
     .source-footer {
       width: 100%;
       margin-top: auto;
-      padding: 20px 16px;
+      padding: 16px 12px;
       background-color: #ffffff;
       border-top: 1px solid #e2e8f0;
       box-sizing: border-box;
     }
-
     .footer-container {
-      max-width: 1180px;
+      max-width: 1560px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -329,337 +786,370 @@
       text-align: center;
       gap: 10px;
     }
+    .source-text { margin: 0; font-size: 0.8rem; line-height: 1.6; color: #64748b; }
+    .source-text strong { color: #1e293b; font-weight: 600; }
+    .badge-wrapper { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .kogl-badge { display: inline-block; padding: 3px 8px; background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; font-size: 0.72rem; font-weight: 600; border-radius: 6px; }
+    .source-link { font-size: 0.78rem; color: #4f46e5; text-decoration: none; font-weight: 600; }
 
-    .source-text {
-      margin: 0;
-      font-size: 0.82rem;
-      line-height: 1.6;
-      color: #64748b;
-      word-break: keep-all;
-    }
-
-    .source-text strong {
-      color: #1e293b;
-      font-weight: 600;
-    }
-
-    .badge-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .kogl-badge {
-      display: inline-block;
-      padding: 3px 8px;
-      background-color: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #475569;
-      font-size: 0.72rem;
-      font-weight: 600;
-      border-radius: 6px;
-    }
-
-    .source-link {
-      font-size: 0.78rem;
-      color: #4f46e5;
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.15s ease-in-out;
-    }
-
-    .source-link:hover {
-      text-decoration: underline;
-      color: #3730a3;
-    }
-
-    @media (min-width: 769px) {
+    @media (min-width: 1024px) {
       .sidebar { height: auto !important; max-height: 88vh; }
       .resizer-bar { display: none !important; }
-      .footer-container {
-        flex-direction: row;
-        justify-content: space-between;
-        text-align: left;
-      }
-      .source-text {
-        max-width: 75%;
-      }
-      .badge-wrapper {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 5px;
-      }
+      .footer-container { flex-direction: row; justify-content: space-between; text-align: left; }
     }
 
-    @media (max-width: 768px) {
-      .app-wrapper { flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
+    @media (max-width: 1023px) {
+      .app-wrapper { 
+        flex-direction: column; 
+        align-items: center; 
+        gap: 6px; 
+        width: 100%;
+        padding: 0 10px;
+        margin-top: 10px;
+      }
       .sidebar { width: 100%; height: 260px; max-height: none; }
       .resizer-bar { display: flex; }
-      .top-controls { flex-direction: column; align-items: stretch; }
-      .control-box { justify-content: space-between; }
+      .card-container { padding: 16px; }
+      .mid-action-bar { justify-content: center; }
     }
   </style>
 </head>
 <body>
 
-  <!-- 첫 접속/새로고침 환영 오버레이 -->
-  <div class="welcome-overlay" id="welcomeOverlay">
+  <!-- 1. 독립 분리형 시작 화면 -->
+  <div id="welcomeScreen">
     <div class="welcome-card">
       <div class="welcome-badge">수어교실 중급반 학습 서포터</div>
       <h1 class="welcome-title">오늘의 수어 학습을 시작합니다 🤟</h1>
-      
-      <div class="welcome-quote-box">
-        <p class="welcome-quote" id="welcomeMessage">반가워요! 손끝으로 세상과 더 깊이 통하는 시간입니다.</p>
-      </div>
-
       <div class="welcome-options">
-        <label class="welcome-label">학습 모드 선택</label>
+        <label style="font-size:0.85rem; font-weight:700; color:#475569;">학습 모드 선택</label>
         <div class="welcome-mode-select">
           <button type="button" class="btn-mode-choice active" id="btnChoiceTest" onclick="selectInitialStudyType('TEST')">
-            📝 시험 모드
-            <span>단어명 확인 후 정답 열기</span>
+            📝 시험 모드 [1]
+            <span style="font-size:0.72rem; color:#64748b;">단어명 확인 후 정답 열기</span>
           </button>
           <button type="button" class="btn-mode-choice" id="btnChoiceVocab" onclick="selectInitialStudyType('VOCAB')">
-            📖 단어장 모드
-            <span>정답 처음부터 공개</span>
+            📖 단어장 모드 [2]
+            <span style="font-size:0.72rem; color:#64748b;">정답 처음부터 공개</span>
           </button>
         </div>
       </div>
-
-      <button class="btn-start-app" onclick="enterStudyRoom()">단어장 바로 시작하기 ✨</button>
+      <button class="btn-start-app" onclick="enterStudyRoom()">단어장 바로 시작하기 ✨ [Enter]</button>
     </div>
   </div>
 
-  <div class="app-wrapper">
-    <!-- 좌측 사이드바 -->
-    <div class="sidebar">
-      <div class="sidebar-header">
-        단어 목록 사전
-        <span>미체크: <b id="sideUncheckedCnt">0</b>개</span>
-      </div>
-      
-      <div class="category-box">
-        <label for="catSelect">📂 학습 과목(카테고리) 선택</label>
-        <select id="catSelect" class="select-cat" onchange="changeCategory(this.value)"></select>
-      </div>
+  <!-- 2. 메인 애플리케이션 화면 -->
+  <div id="mainApp">
+    <!-- 상단 멀티 탭 영역 -->
+    <div class="tab-bar" id="tabBar"></div>
 
-      <div class="sidebar-controls">
-        <input type="text" id="searchInput" placeholder="🔍 현재 과 단어 검색..." oninput="renderSidebar()">
+    <div class="app-wrapper">
+      <!-- 좌측 사이드바 -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          단어 목록 사전
+          <span>미체크: <b id="sideUncheckedCnt">0</b>개</span>
+        </div>
         
-        <div class="sidebar-opt-row">
-          <label class="toggle-hide-container">
-            <input type="checkbox" id="globalHideCheck" onchange="toggleGlobalHide(this.checked)"> 
-            🙈 전체 마스킹
-          </label>
+        <div class="category-box">
+          <label for="catSelect">📂 학습 과목(카테고리) 선택</label>
+          <select id="catSelect" class="select-cat" onchange="changeCategory(this.value)"></select>
+        </div>
 
-          <div>
-            <select id="sidebarOrder" class="select-order" onchange="renderSidebar()">
-              <option value="num">번호순 정렬</option>
-              <option value="study" selected>학습순(셔플)</option>
-            </select>
+        <div class="sidebar-controls">
+          <input type="text" id="searchInput" placeholder="🔍 현재 과 단어 검색..." oninput="renderSidebar()">
+          
+          <div class="range-select-box">
+            <input type="number" id="rangeStart" placeholder="시작" min="1">
+            <span>~</span>
+            <input type="number" id="rangeEnd" placeholder="끝" min="1">
+            <button onclick="checkWordRange()">범위체크</button>
+          </div>
+
+          <div class="sidebar-opt-row">
+            <label class="toggle-hide-container">
+              <input type="checkbox" id="globalHideCheck" onchange="toggleGlobalHide(this.checked)"> 
+              🙈 전체 마스킹
+            </label>
+            <div class="sidebar-order-group">
+              <button id="btnShuffle" class="btn-order-toggle active" onclick="shuffleCurrentList()" title="단어 순서 셔플">🔀 셔플</button>
+              <button id="btnNumeric" class="btn-order-toggle" onclick="sortCurrentListNumeric()" title="번호순 정렬">🔢 번호순</button>
+            </div>
+          </div>
+          
+          <div class="sidebar-actions">
+            <button class="btn-select" onclick="selectAllFiltered()">전체선택</button>
+            <button class="btn-select" onclick="deselectAllFiltered()">선택해제</button>
+            <button class="btn-study-custom" onclick="studySelected()">✨ 선택 학습</button>
+          </div>
+        </div>
+
+        <div class="sidebar-list" id="sidebarList"></div>
+      </div>
+
+      <!-- 모바일 전용 높이 조절 바 -->
+      <div class="resizer-bar" id="dragResizer" title="상하로 드래그하여 높이 조절">
+        <div class="resizer-pill"></div>
+      </div>
+
+      <!-- 우측 메인 학습 카드 -->
+      <div class="card-container">
+        <!-- 최상단 모드 배치 영역 (전체 학습 모드 옆 시험/단어장 전환) -->
+        <div class="mode-badge-wrap">
+          <div class="mode-badge" id="modeName">전체 학습 모드</div>
+          <div class="top-mode-switch-group">
+            <button id="btnSwitchTest" class="btn-mode-pill active" onclick="setStudyType('TEST')">📝 시험</button>
+            <button id="btnSwitchVocab" class="btn-mode-pill" onclick="setStudyType('VOCAB')">📖 단어장</button>
           </div>
         </div>
         
-        <div class="sidebar-actions">
-          <button class="btn-select" onclick="selectAllFiltered()">전체선택</button>
-          <button class="btn-select" onclick="deselectAllFiltered()">선택해제</button>
-          <button class="btn-study-custom" onclick="studySelected()">✨ 선택 학습</button>
+        <div class="progress-bar" id="progress">단어 0 / 0</div>
+        
+        <div class="stats-summary">
+          <span class="stat-known">아는 단어: <b id="cntKnown">0</b></span>
+          <span class="stat-unknown">모르는 단어: <b id="cntUnknown">0</b></span>
+          <span class="stat-review">재확인: <b id="cntReview">0</b></span>
+        </div>
+
+        <!-- 최상단 전면 배치 단어 헤더 바 & 단어 아래 상태 박스 -->
+        <div class="top-word-banner-wrapper">
+          <div class="top-word-banner" id="topWordBanner">
+            <div class="top-word-title" id="topWordTitle">단어를 불러오는 중...</div>
+            <div class="quick-mark-group" id="quickMarkGroup">
+              <button id="qm-known" class="q-mark known" onclick="markCurrent('known')" title="아는 문제로 체크">아는</button>
+              <button id="qm-unknown" class="q-mark unknown" onclick="markCurrent('unknown')" title="모르는 문제로 체크">모르는</button>
+              <button id="qm-review" class="q-mark review" onclick="markCurrent('review')" title="재확인 문제로 체크">재확인</button>
+              <button id="qm-uncheck" class="q-mark uncheck" onclick="markCurrent('none')" title="체크 해제">미체크</button>
+            </div>
+          </div>
+          <div class="top-word-banner-resizer" id="topWordBannerResizer" title="상하로 드래그하여 단어 영역 높이 조절"></div>
+        </div>
+
+        <!-- 듀얼 뷰포트 래퍼 (영상 바로 아래 드래그 조절바 탑재) -->
+        <div class="viewport-wrapper">
+          <div class="dual-viewport-grid" id="dualGrid">
+            <div class="viewport-box" id="dictViewport">
+              <span class="vp-label">🎬 국립국어원 표준 수어 영상</span>
+              <div id="dictMediaTarget" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"></div>
+            </div>
+
+            <!-- 순수 비디오 피드로 경량화된 동작 캠 -->
+            <div class="viewport-box webcam-live" id="webcamViewport" style="display:none;">
+              <span class="vp-label" style="background: rgba(22, 101, 52, 0.85);">🤖 내 동작 확인 캠</span>
+              <video id="mpVideoFeed" playsinline muted autoplay></video>
+            </div>
+          </div>
+          <!-- 영상 영역 높이 조절 리사이저 바 -->
+          <div class="viewport-resizer" id="vpResizer" title="상하로 드래그하여 영상 및 웹캠 크기 조절"></div>
+        </div>
+
+        <!-- 영상 아래 중간 제어바 (미디어 도구 + 설명창 숨기기 같은 줄) -->
+        <div class="mid-action-bar">
+          <div class="mid-controls-group">
+            <button id="btnVideoPlayPause" class="btn-action-tool" onclick="toggleVideoPlayPause()" title="동영상 재생/일시정지">⏸️ 정지</button>
+            <button id="btnMirror" class="btn-action-tool" onclick="toggleMirrorMode()" title="동영상 좌우 반전">🪞 거울</button>
+            <button id="btnWebcam" class="btn-action-tool cam-btn" onclick="toggleHolisticWebcam()" title="웹캠으로 내 동작 확인">📷 동작 캠</button>
+            <button class="btn-action-tool tts-btn" onclick="speakCurrentWord()" title="현재 단어 발음 듣기">🔊 발음 듣기</button>
+            <button class="btn-action-tool settings-btn" onclick="toggleSettingsModal(true)" title="환경 설정 열기">⚙️ 설정</button>
+          </div>
+          <button id="btnToggleDesc" class="desc-toggle-btn" onclick="toggleDescVisibility()">🔽 설명창 숨기기</button>
+        </div>
+
+        <!-- 하단 설명 및 힌트 컨테이너 -->
+        <div class="detail-wrapper">
+          <div class="detail-container" id="detailContainer">
+            <div id="detailContent">학습할 단어를 선택하거나 시작 버튼을 누르세요</div>
+          </div>
+          <div class="detail-resizer" id="descResizer" title="상하로 드래그하여 설명창 높이 조절"></div>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn-mark-known" onclick="markCurrent('known')">아는 문제 [1/A]</button>
+          <button class="btn-mark-unknown" onclick="markCurrent('unknown')">모르는 문제 [2/S]</button>
+          <button class="btn-mark-review" onclick="markCurrent('review')">재확인 [3/D]</button>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn-prev" onclick="prevWord()">이전 [Q]</button>
+          <button class="btn-reveal" id="btnReveal" onclick="toggleAnswer()">정답 [Space/W]</button>
+          <button class="btn-next" onclick="nextWord()">다음 [E]</button>
+        </div>
+
+        <button class="btn-start" onclick="startLearning()">▶️ 처음부터 새로 학습 시작 (셔플) [N]</button>
+        <button class="btn-review-mode" id="btnReviewMode" onclick="startReviewMode()">✏️ 오답노트(모름/재확인) 진입 [O]</button>
+        <button class="btn-full-mode" id="btnFullMode" onclick="returnToFullMode()" style="display: none;">🏠 전체메뉴로 돌아가기 [I]</button>
+        
+        <button class="btn-pause" onclick="togglePauseModal()">⏸️ 중간 결과 및 미체크 문제 확인 [P]</button>
+        <button class="btn-reset" onclick="resetAll()">현재 카테고리 마킹 초기화 및 셔플 [R]</button>
+
+        <div class="shortcut-info">
+          ⌨️ <b>단축키 안내:</b> 1/A (아는), 2/S (모름), 3/D (재확인) | Space/W (정답 열기) | Q/E (이전/다음)<br>
+          • <b>모드 전환:</b> [O] 오답노트 진입, [I] 전체메뉴 복귀 <br>
+          • <b>번호 범위 체크:</b> 좌측 상단에 시작과 끝 번호(예: 1~50)를 입력하고 [범위체크]를 누르면 한 번에 선택됩니다[cite: 11].
         </div>
       </div>
-
-      <div class="sidebar-list" id="sidebarList"></div>
     </div>
 
-    <!-- 모바일 전용 높이 조절 바 -->
-    <div class="resizer-bar" id="dragResizer" title="상하로 드래그하여 단어 목록 높이 조절">
-      <div class="resizer-pill"></div>
-    </div>
-
-    <!-- 우측 학습 카드 -->
-    <div class="card-container">
-      <div class="mode-badge-wrap">
-        <div class="mode-badge" id="modeName">전체 학습 모드</div>
-        <div class="mode-badge vocab" id="studyTypeBadge">📝 시험 모드</div>
-      </div>
-      <div class="progress-bar" id="progress">단어 0 / 0</div>
-      
-      <div class="stats-summary">
-        <span class="stat-known">아는 단어: <b id="cntKnown">0</b></span>
-        <span class="stat-unknown">모르는 단어: <b id="cntUnknown">0</b></span>
-        <span class="stat-review">재확인: <b id="cntReview">0</b></span>
-      </div>
-
-      <!-- 상단 분리형 제어바 -->
-      <div class="top-controls">
-        <!-- 모드 전환 (시험 모드 vs 단어장 모드) -->
-        <div class="control-box type-switch-box">
-          <span>모드:</span>
-          <button id="btnSwitchTest" class="btn-type-toggle active" onclick="setStudyType('TEST')">📝 시험</button>
-          <button id="btnSwitchVocab" class="btn-type-toggle" onclick="setStudyType('VOCAB')">📖 단어장</button>
-        </div>
-
-        <div class="control-box timer-reveal-box" id="revealTimerBox">
-          <label style="cursor:pointer;"><input type="checkbox" id="useRevealTimer" onchange="initTimers()"> ⏱️ 정답 자동 열기</label>
-          <select id="revealSecs" onchange="initTimers()">
-            <option value="1">1초</option>
-            <option value="2">2초</option>
-            <option value="3" selected>3초</option>
-            <option value="4">4초</option>
-            <option value="5">5초</option>
-            <option value="6">6초</option>
-            <option value="7">7초</option>
-            <option value="8">8초</option>
-            <option value="9">9초</option>
-            <option value="10">10초</option>
-          </select>
-          <span id="revealCountdown" class="timer-badge badge-reveal-cd">-</span>
-        </div>
-
-        <div class="control-box timer-next-box">
-          <label style="cursor:pointer;"><input type="checkbox" id="useNextTimer" onchange="initTimers()"> ⏭️ 다음 문제 자동 넘김</label>
-          <select id="nextSecs" onchange="initTimers()">
-            <option value="1">1초</option>
-            <option value="2" selected>2초</option>
-            <option value="3">3초</option>
-            <option value="4">4초</option>
-            <option value="5">5초</option>
-            <option value="6">6초</option>
-            <option value="7">7초</option>
-            <option value="8">8초</option>
-            <option value="9">9초</option>
-            <option value="10">10초</option>
-          </select>
-          <span id="nextCountdown" class="timer-badge badge-next-cd">-</span>
-        </div>
-
-        <div class="control-box order-box">
-          <span>정렬:</span>
-          <button id="btnShuffle" class="btn-order-toggle active" onclick="shuffleCurrentList()">🔀 셔플</button>
-          <button id="btnNumeric" class="btn-order-toggle" onclick="sortCurrentListNumeric()">🔢 번호순</button>
-        </div>
-
-        <div class="control-box">
-          <label for="imgScale">🔍 크기:</label>
-          <input type="range" id="imgScale" min="0.5" max="3.0" step="0.1" value="1.0" oninput="changeImgSize(this.value)">
-        </div>
-
-        <!-- TTS 음성 설정, 재생속도(0.25배~2배), 자동재생 제어박스 -->
-        <div class="control-box" style="background:#fefce8; border-color:#fde047; gap:8px;">
-          <span>🗣️ :</span>
-          <select id="ttsVoiceSelect" style="border: 1px solid #facc15; border-radius: 4px; outline: none; padding: 2px 4px; font-size: 0.8rem; background: #fff;">
-            <option value="">음성 로딩중...</option>
-          </select>
-          
-          <select id="ttsRateSelect" style="border: 1px solid #facc15; border-radius: 4px; outline: none; padding: 2px 4px; font-size: 0.8rem; background: #fff;" title="음성 재생 속도 선택">
-            <option value="0.25">0.25배속</option>
-            <option value="0.5">0.5배속</option>
-            <option value="0.75">0.75배속</option>
-            <option value="1.0" selected>1.0배속</option>
-            <option value="1.25">1.25배속</option>
-            <option value="1.5">1.5배속</option>
-            <option value="1.75">1.75배속</option>
-            <option value="2.0">2.0배속</option>
-          </select>
-
-          <label style="cursor:pointer; display:inline-flex; align-items:center; gap:3px;" title="단어가 넘어갈 때 자동으로 음성을 재생하고, 음성이 끝난 뒤 다음 진행">
-            <input type="checkbox" id="autoPlayTts" > 🔄
-          </label>
-          <button onclick="speakCurrentWord()" style="background:#eab308; color:#fff; border:none; border-radius:4px; padding:3px 8px; font-size:0.75rem; cursor:pointer;" title="현재 단어 음성 듣기">🔊</button>
+    <!-- 출처 표기 푸터 -->
+    <footer class="source-footer">
+      <div class="footer-container">
+        <p class="source-text">
+          본 자료에 수록된 수어 단어명, 동작 해설, 영상 및 사진 자료는 
+          <strong>국립국어원 한국수어사전</strong>의 공공저작물을 활용하여 제작되었습니다.
+        </p>
+        <div class="badge-wrapper">
+          <span class="kogl-badge">공공누리 제1유형: 출처표시</span>
+          <a href="https://sldict.korean.go.kr" target="_blank" rel="noopener noreferrer" class="source-link">
+            국립국어원 한국수어사전 바로가기 &rarr;
+          </a>
         </div>
       </div>
-
-      <div class="word-box" id="display">
-        <div id="statusTag"></div>
-        <div id="wordContent">학습할 단어를 선택하거나 시작 버튼을 누르세요</div>
-      </div>
-      
-      <div class="btn-group">
-        <button class="btn-mark-known" onclick="markCurrent('known')">아는 문제 [1/A]</button>
-        <button class="btn-mark-unknown" onclick="markCurrent('unknown')">모르는 문제 [2/S]</button>
-        <button class="btn-mark-review" onclick="markCurrent('review')">재확인 [3/D]</button>
-      </div>
-
-      <div class="btn-group">
-        <button class="btn-prev" onclick="prevWord()">이전 [Q]</button>
-        <button class="btn-reveal" id="btnReveal" onclick="toggleAnswer()">정답 [Space/W]</button>
-        <button class="btn-next" onclick="nextWord()">다음 [E]</button>
-      </div>
-
-      <button class="btn-start" onclick="startLearning()">▶️ 처음부터 새로 학습 시작 (셔플) [N]</button>
-      <button class="btn-full-mode" id="btnFullMode" onclick="returnToFullMode()" style="display: none;">🏠 전체 모드로 돌아가기 [O]</button>
-      <button class="btn-review-mode" id="btnReviewMode" onclick="startReviewMode()">✏️ 오답노트 풀기 (모름/재확인) [O]</button>
-      <button class="btn-pause" onclick="togglePauseModal()">⏸️ 중간 결과 및 미체크 문제 확인 [P]</button>
-      <button class="btn-reset" onclick="resetAll()">현재 카테고리 마킹 초기화 및 셔플 [R]</button>
-
-      <div class="shortcut-info">
-        ⌨️ <b>단축키 안내</b><br>
-        • <b>1 / A</b>: 아는 문제 | <b>2 / S</b>: 모르는 문제 | <b>3 / D</b>: 재확인 필요<br>
-        • <b>Space / W</b>: 정답/뜻 보기(시험 모드) | <b>Q / E</b>: 이전 / 다음 단어<br>
-        • <b>P</b>: 중간 결과 확인 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <b>R</b>: 현재 카테고리 초기화<br>
-        • <b>N</b>: 새로 학습 시작 (셔플) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <b>O</b>: 오답/전체 모드 전환
-      </div>
-    </div>
+    </footer>
   </div>
 
-  <!-- 출처 표기 반응형 푸터 -->
-  <footer class="source-footer">
-    <div class="footer-container">
-      <p class="source-text">
-        본 자료에 수록된 수어 단어명, 동작 해설, 영상 및 사진 자료는 
-        <strong>국립국어원 한국수어사전</strong>의 공공저작물을 활용하여 제작되었습니다.
-      </p>
-      <div class="badge-wrapper">
-        <span class="kogl-badge">공공누리 제1유형: 출처표시</span>
-        <a href="https://sldict.korean.go.kr" target="_blank" rel="noopener noreferrer" class="source-link">
-          국립국어원 한국수어사전 바로가기 &rarr;
-        </a>
+  <!-- 통합 환경설정 모달 창 -->
+  <div class="settings-modal-overlay" id="settingsModal">
+    <div class="settings-modal-card">
+      <div class="settings-header">
+        <h3>⚙️ 환경 설정</h3>
+        <button class="settings-close-x" onclick="toggleSettingsModal(false)">✕</button>
       </div>
+
+      <div class="settings-grid">
+        <!-- 1. 타이머 설정 -->
+        <div class="settings-group">
+          <div class="settings-group-title">⏱️ 자동 진행 타이머 설정</div>
+          <div class="settings-row">
+            <label><input type="checkbox" id="useRevealTimer" onchange="initTimers()"> 정답 자동 열기</label>
+            <select id="revealSecs" onchange="initTimers()">
+              <option value="1">1초</option>
+              <option value="2">2초</option>
+              <option value="3" selected>3초</option>
+              <option value="4">4초</option>
+              <option value="5">5초</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label><input type="checkbox" id="useNextTimer" onchange="initTimers()"> 다음 문제 자동 넘김</label>
+            <select id="nextSecs" onchange="initTimers()">
+              <option value="1">1초</option>
+              <option value="2" selected>2초</option>
+              <option value="3">3초</option>
+              <option value="4">4초</option>
+              <option value="5">5초</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 2. 동영상 재생 설정 -->
+        <div class="settings-group">
+          <div class="settings-group-title">🎬 동영상 재생 설정</div>
+          <div class="settings-row">
+            <span>재생 속도 (배속)</span>
+            <select id="videoSpeedSelect" onchange="changeVideoSpeed(this.value)">
+              <option value="0.5">0.5배속</option>
+              <option value="0.75">0.75배속</option>
+              <option value="1.0" selected>1.0배속 (기본)</option>
+              <option value="1.25">1.25배속</option>
+              <option value="1.5">1.5배속</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span>동영상 반복 재생 횟수</span>
+            <select id="videoLoopCountSelect" onchange="changeVideoLoopCount(this.value)">
+              <option value="1">1회만 재생</option>
+              <option value="2">2회 반복</option>
+              <option value="3">3회 반복</option>
+              <option value="4">4회 반복</option>
+              <option value="5">5회 반복</option>
+              <option value="999" selected>무한 반복</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 3. 동작캠 화질 설정 -->
+        <div class="settings-group">
+          <div class="settings-group-title">📷 동작 캠 화질 설정</div>
+          <div class="settings-row">
+            <span>카메라 해상도</span>
+            <select id="camResSelect" onchange="changeCamResolution(this.value)">
+              <option value="320x240">저화질 (240p - 초경량)</option>
+              <option value="640x480" selected>일반 화질 (480p - 권장)</option>
+              <option value="1280x720">고화질 (720p HD)</option>
+              <option value="1920x1080">초고화질 (1080p FHD)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4. 음성(TTS) 설정 -->
+        <div class="settings-group">
+          <div class="settings-group-title">🗣️ 한국어 음성 (TTS) 설정</div>
+          <div class="settings-row">
+            <span>음성 목소리 선택</span>
+            <select id="ttsVoiceSelect" style="max-width: 170px;"></select>
+          </div>
+          <div class="settings-row">
+            <span>발음 재생 속도</span>
+            <select id="ttsRateSelect">
+           <option value="1.0" selected>1.0배속 (기본)</option>
+             <option value="1.25">1.25배속</option>
+             <option value="1.5">1.5배속</option>
+             <option value="1.75">1.75배속</option>
+             <option value="2.0">2.0배속</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span>단어당 발음 반복 횟수</span>
+            <select id="ttsRepeatCountSelect">
+              <option value="1" selected>1회 반복</option>
+              <option value="2">2회 반복</option>
+              <option value="3">3회 반복</option>
+              <option value="4">4회 반복</option>
+              <option value="5">5회 반복</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label><input type="checkbox" id="autoPlayTts"> 단어 이동 시 자동으로 음성 듣기</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-save-settings" onclick="toggleSettingsModal(false)">설정 완료 및 닫기</button>
     </div>
-  </footer>
+  </div>
 
   <!-- 중간 결과 모달 -->
   <div class="modal-overlay" id="pauseModal">
     <div class="modal-content">
       <h2>📊 중간 학습 결과</h2>
       <div class="modal-grid">
-        <div>• 전체 단어: <b id="mTotal">0</b>개</div>
-        <div>• 체크 완료: <b id="mChecked">0</b>개</div>
+        <div>• 전체: <b id="mTotal">0</b>개</div>
+        <div>• 완료: <b id="mChecked">0</b>개</div>
         <div>• 아는 단어: <b id="mKnown" style="color:#16a34a;">0</b>개</div>
         <div>• 모르는 단어: <b id="mUnknown" style="color:#dc2626;">0</b>개</div>
-        <div>• 재확인: <b id="mReview" style="color:#d97706;">0</b>개</div>
-        <div>• 미체크(안풀음): <b id="mUnchecked" style="color:#e11d48;">0</b>개</div>
-      </div>
-
-      <div style="text-align: left; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #475569;">
-        📌 풀지 않은(미체크) 문제 목록:
       </div>
       <div class="modal-unchecked-box" id="mUncheckedList">-</div>
-
-      <button class="btn-resume" onclick="togglePauseModal()">계속해서 학습하기 [P / Esc]</button>
+      <button class="btn-resume" onclick="togglePauseModal()">계속 학습하기 [P / Esc]</button>
     </div>
   </div>
 
-  <!-- 1. 외부 수어 데이터 파일 불러오기 -->
+  <!-- 마지막 문제 도달 시 학습 완료 결과 모달 -->
+  <div class="modal-overlay" id="endModal">
+    <div class="modal-content">
+      <h2 id="endModalTitle" style="margin:0;">🎉 학습 완료!</h2>
+      <p id="endModalDesc" style="color:#64748b; font-size:0.9rem; margin-top: 6px;">현재 목록의 마지막 단어까지 확인을 마쳤습니다.</p>
+      <div class="modal-grid" id="endResultSummary"></div>
+      <button id="endModalActionBtn" class="btn-resume" style="background:#8b5cf6; margin-bottom: 8px;" onclick="handleEndModalAction()">✏️ 오답노트 바로 시작하기</button>
+      <button class="btn-resume" style="background:#94a3b8;" onclick="closeEndModal()">확인 및 닫기 [Esc]</button>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 컨테이너 -->
+  <div id="toast">알림 내용</div>
+
   <script src="js/sign_data.js"></script>
 
-  <!-- 2. 메인 실행 및 제어 로직 -->
   <script>
-    const WELCOME_MESSAGES = [
-      "손끝으로 세상과 따뜻하게 마음을 잇는 시간입니다. 중급반 여러분을 환영합니다! 🤟",
-      "표정과 손짓이 풍성해질수록 여러분의 수어도 더욱 깊어집니다. 오늘도 화이팅! ✨",
-      "중급반의 실력은 꾸준한 복습에서 피어납니다. 자연스러운 손길을 위해 오늘도 전진!",
-      "익숙해진 지문자와 단어 위에 자신감을 얹어보세요. 여러분의 손길을 응원합니다. 🌟",
-      "머리로 기억하고, 손과 표정으로 완성하는 수어! 오늘도 멋진 표현 기대할게요.",
-      "농인과 농사회의 진정한 벗으로 한 걸음 더! 즐거운 마음으로 시작해 볼까요? 💡",
-      "중급 도약의 핵심은 디테일한 비수지기호와 매끄러운 연결입니다. 함께 연습해요!",
-      "망설이지 말고 손을 움직여 보세요. 연습한 만큼 여러분의 손끝은 정직하게 답합니다. 👏",
-      "오늘 익힌 수어 단어 하나가 내일의 소중한 대화를 이어줍니다. 즐겁게 학습하세요!",
-      "손끝의 작은 움직임이 누군가에게는 큰 울림이 됩니다. 중급반 여러분, 힘내세요! 🌈"
-    ];
-
-    // 기본 카테고리 우선 순서 지정 (필요 시 원하는 키 순서로 변경 가능)
     const CATEGORY_ORDER = [
       "cat1", "cat2", "cat3", "cat4", "cat5", "cat6", "cat7", "cat8", "cat9", "cat10",
       "cat11", "cat12", "cat13", "cat14", "cat15", "cat16", "cat17", "cat18", "cat19", "cat20",
@@ -668,303 +1158,622 @@
       "cat_life", "cat_food", "cat_housing"
     ];
 
-    // 외부 sign_data.js의 SIGN_CATEGORIES와 연동 (오류 방지 안전 처리)
     const CATEGORIES = (typeof SIGN_CATEGORIES !== 'undefined') ? SIGN_CATEGORIES : {};
 
     let currentCatKey = CATEGORY_ORDER[0];
-    let wordList = [];
-    let fullActiveList = [];  
-    let activeList = [];      
-    let currentIndex = 0;
-    let savedFullIndex = 0;   
-    let isRevealed = false;
-    let isShuffled = true;
-    
-    let currentMode = 'FULL'; 
-    let studyType = 'TEST'; 
-    const statusMap = {};
-    
-    const selectedWords = new Set();
-    const hiddenWords = new Set();
+    let wordList = [], fullActiveList = [], activeList = [];
+    let currentIndex = 0, savedFullIndex = 0;
+    let isRevealed = false, isShuffled = true;
+    let currentMode = 'FULL', studyType = 'TEST';
+    const statusMap = {}, selectedWords = new Set(), hiddenWords = new Set();
     let isGlobalHidden = false;
+
+    let tabs = [];
+    let activeTabId = null;
+    let tabCounter = 0;
     let isSelectingDrag = null;
 
-    let ttsVoices = [];
-    let isSpeaking = false; 
+    let ttsVoices = [], isSpeaking = false;
+    let isMirrored = false, currentVideoSpeed = 1.0;
+    let isVideoPlaying = true;
+    let targetVideoLoopCount = 999;
+    let currentVideoPlayCount = 0;
 
-    function getWordKey(id) {
-      return `${currentCatKey}_${id}`;
+    // 순수 웹캠 제어 변수
+    let webcamStream = null;
+    let camWidth = 640;
+    let camHeight = 480;
+
+    let endModalIsAllKnown = false;
+
+    // 토스트 알림 함수
+    let toastTimer = null;
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.innerText = message;
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
     }
+
+    function toggleSettingsModal(show) {
+      const modal = document.getElementById('settingsModal');
+      if (!modal) return;
+      modal.style.display = show ? 'flex' : 'none';
+      if (!show) showToast("설정이 저장되었습니다.");
+    }
+
+    // --- 멀티 탭 시스템 함수 --- //
+    function createNewTab() {
+      tabCounter++;
+      const newTabId = 'tab_' + tabCounter;
+      const newTabState = {
+        id: newTabId,
+        name: `새 학습 탭`,
+        currentCatKey: CATEGORY_ORDER[0],
+        wordList: [],
+        fullActiveList: [],
+        activeList: [],
+        currentIndex: 0,
+        savedFullIndex: 0,
+        isRevealed: false,
+        isShuffled: true,
+        currentMode: 'FULL',
+        studyType: 'TEST',
+        statusMap: {},
+        selectedWords: new Set(),
+        hiddenWords: new Set(),
+        isGlobalHidden: false
+      };
+      tabs.push(newTabState);
+
+      if (!activeTabId) {
+        activeTabId = newTabId;
+        loadCategoryData();
+      } else {
+        switchTab(newTabId);
+        loadCategoryData();
+      }
+    }
+
+    function saveCurrentTabState() {
+      if (!activeTabId) return;
+      const tab = tabs.find(t => t.id === activeTabId);
+      if (tab) {
+        tab.currentCatKey = currentCatKey;
+        tab.wordList = [...wordList];
+        tab.fullActiveList = [...fullActiveList];
+        tab.activeList = [...activeList];
+        tab.currentIndex = currentIndex;
+        tab.savedFullIndex = savedFullIndex;
+        tab.isRevealed = isRevealed;
+        tab.isShuffled = isShuffled;
+        tab.currentMode = currentMode;
+        tab.studyType = studyType;
+        tab.statusMap = JSON.parse(JSON.stringify(statusMap));
+        tab.selectedWords = new Set(selectedWords);
+        tab.hiddenWords = new Set(hiddenWords);
+        tab.isGlobalHidden = isGlobalHidden;
+      }
+    }
+
+    function loadTabState(tabId) {
+      const tab = tabs.find(t => t.id === tabId);
+      if (!tab) return;
+      
+      currentCatKey = tab.currentCatKey;
+      wordList = [...tab.wordList];
+      fullActiveList = [...tab.fullActiveList];
+      activeList = [...tab.activeList];
+      currentIndex = tab.currentIndex;
+      savedFullIndex = tab.savedFullIndex;
+      isRevealed = tab.isRevealed;
+      isShuffled = tab.isShuffled;
+      currentMode = tab.currentMode;
+      studyType = tab.studyType;
+      
+      Object.keys(statusMap).forEach(k => delete statusMap[k]);
+      Object.assign(statusMap, tab.statusMap);
+      
+      selectedWords.clear();
+      tab.selectedWords.forEach(v => selectedWords.add(v));
+      
+      hiddenWords.clear();
+      tab.hiddenWords.forEach(v => hiddenWords.add(v));
+      
+      isGlobalHidden = tab.isGlobalHidden;
+      const ghc = document.getElementById('globalHideCheck');
+      if (ghc) ghc.checked = isGlobalHidden;
+      
+      document.getElementById('catSelect').value = currentCatKey;
+      setStudyType(studyType);
+      updateOrderButtonUI();
+      renderSidebar();
+      updateCard();
+    }
+
+    function switchTab(tabId) {
+      if (activeTabId === tabId) return;
+      clearAllTimers();
+      saveCurrentTabState();
+      activeTabId = tabId;
+      loadTabState(tabId);
+      renderTabsUI();
+      showToast("학습 탭을 전환했습니다.");
+    }
+
+    function closeTab(tabId, e) {
+      e.stopPropagation();
+      if (tabs.length <= 1) {
+        alert("마지막 탭은 닫을 수 없습니다.");
+        return;
+      }
+      const idx = tabs.findIndex(t => t.id === tabId);
+      tabs.splice(idx, 1);
+      
+      if (activeTabId === tabId) {
+        const nextTab = tabs[Math.max(0, idx - 1)];
+        switchTab(nextTab.id);
+      } else {
+        renderTabsUI();
+      }
+    }
+
+    function renderTabsUI() {
+      const tabBar = document.getElementById('tabBar');
+      if (!tabBar) return;
+      tabBar.innerHTML = '';
+      
+      tabs.forEach(tab => {
+        const t = document.createElement('div');
+        t.className = `tab ${tab.id === activeTabId ? 'active' : ''}`;
+        t.innerHTML = `
+          <span onclick="switchTab('${tab.id}')">${tab.name}</span>
+          ${tabs.length > 1 ? `<span class="tab-close" onclick="closeTab('${tab.id}', event)">✕</span>` : ''}
+        `;
+        tabBar.appendChild(t);
+      });
+      
+      const addBtn = document.createElement('div');
+      addBtn.className = 'tab-add';
+      addBtn.innerText = '+ 새 탭';
+      addBtn.onclick = createNewTab;
+      tabBar.appendChild(addBtn);
+    }
+
+    // --- 웹캠 기능 ---
+    function changeCamResolution(val) {
+      const parts = val.split('x');
+      camWidth = parseInt(parts[0], 10);
+      camHeight = parseInt(parts[1], 10);
+      showToast(`카메라 화질이 ${parts[1]}p로 변경되었습니다.`);
+      if (webcamStream) {
+        startWebcamStream();
+      }
+    }
+
+    async function startWebcamStream() {
+      const videoElem = document.getElementById('mpVideoFeed');
+      const vp = document.getElementById('webcamViewport');
+      const grid = document.getElementById('dualGrid');
+      const btn = document.getElementById('btnWebcam');
+      
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+      }
+
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: camWidth },
+            height: { ideal: camHeight }
+          },
+          audio: false
+        });
+        videoElem.srcObject = webcamStream;
+        vp.style.display = 'flex';
+        grid.classList.add('dual-active');
+        btn.innerText = "📷 동작 캠 끄기";
+        btn.style.background = "#ef4444";
+      } catch (err) {
+        console.error("웹캠 실행 실패:", err);
+        showToast("카메라 장치를 시작할 수 없습니다. 권한을 확인해주세요.");
+        vp.style.display = 'none';
+        grid.classList.remove('dual-active');
+        btn.innerText = "📷 동작 캠";
+        btn.style.background = "#0f172a";
+      }
+    }
+
+    function toggleHolisticWebcam() {
+      const vp = document.getElementById('webcamViewport');
+      const grid = document.getElementById('dualGrid');
+      const btn = document.getElementById('btnWebcam');
+      const videoElem = document.getElementById('mpVideoFeed');
+
+      if (!webcamStream) {
+        startWebcamStream();
+        showToast("📷 내 동작 확인 캠이 켜졌습니다.");
+      } else {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+        videoElem.srcObject = null;
+        vp.style.display = 'none';
+        grid.classList.remove('dual-active');
+        btn.innerText = "📷 동작 캠";
+        btn.style.background = "#0f172a";
+        showToast("📷 동작 캠이 꺼졌습니다.");
+      }
+    }
+
+    // 영상 크기 조절 리사이저 드래그 로직
+    function initViewportResizer() {
+      const resizer = document.getElementById('vpResizer');
+      if (!resizer) return;
+      
+      let startY = 0, startH = 0;
+      
+      const onDrag = (e) => {
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        let newH = Math.max(160, Math.min(window.innerHeight * 0.85, startH + (clientY - startY)));
+        document.documentElement.style.setProperty('--vp-height', `${newH}px`);
+      };
+      
+      const stopDrag = () => {
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('touchend', stopDrag);
+      };
+
+      resizer.addEventListener('mousedown', (e) => {
+        startY = e.clientY;
+        const curBox = document.getElementById('dictViewport');
+        startH = curBox ? curBox.getBoundingClientRect().height : 340;
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
+      });
+
+      resizer.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        const curBox = document.getElementById('dictViewport');
+        startH = curBox ? curBox.getBoundingClientRect().height : 340;
+        document.addEventListener('touchmove', onDrag, {passive: false});
+        document.addEventListener('touchend', stopDrag);
+      }, {passive: true});
+    }
+
+    function toggleMirrorMode() {
+      isMirrored = !isMirrored;
+      document.getElementById('btnMirror').classList.toggle('active', isMirrored);
+      applyVideoStyles();
+      showToast(isMirrored ? "🪞 거울 반전 모드 활성화" : "거울 모드 해제");
+    }
+
+    function changeVideoSpeed(speed) {
+      currentVideoSpeed = parseFloat(speed) || 1.0;
+      applyVideoStyles();
+    }
+
+    function toggleVideoPlayPause() {
+      const vid = document.querySelector('#dictMediaTarget video');
+      const btn = document.getElementById('btnVideoPlayPause');
+      if (!vid) return;
+
+      if (vid.paused) {
+        vid.play();
+        isVideoPlaying = true;
+        btn.innerText = "⏸️ 정지";
+        showToast("영상 재생");
+      } else {
+        vid.pause();
+        isVideoPlaying = false;
+        btn.innerText = "▶️ 재생";
+        showToast("영상 일시 정지");
+      }
+    }
+
+    function changeVideoLoopCount(val) {
+      targetVideoLoopCount = parseInt(val) || 999;
+      currentVideoPlayCount = 0;
+      applyVideoStyles();
+    }
+
+    function applyVideoStyles() {
+      const vid = document.querySelector('#dictMediaTarget video');
+      const btn = document.getElementById('btnVideoPlayPause');
+      if (!vid) return;
+
+      vid.playbackRate = currentVideoSpeed;
+      if (isMirrored) vid.classList.add('mirrored');
+      else vid.classList.remove('mirrored');
+
+      vid.onended = () => {
+        currentVideoPlayCount++;
+        if (currentVideoPlayCount < targetVideoLoopCount) {
+          vid.play();
+        } else {
+          vid.pause();
+          isVideoPlaying = false;
+          if (btn) btn.innerText = "▶️ 재생";
+        }
+      };
+      if (targetVideoLoopCount >= 999) vid.loop = true;
+      else vid.loop = false;
+
+      if (isVideoPlaying) {
+        vid.play().catch(() => {});
+        if (btn) btn.innerText = "⏸️ 정지";
+      } else {
+        vid.pause();
+        if (btn) btn.innerText = "▶️ 재생";
+      }
+    }
+
+    function getWordKey(id) { return `${currentCatKey}_${id}`; }
 
     function loadVoices() {
       if (!('speechSynthesis' in window)) return;
       ttsVoices = window.speechSynthesis.getVoices();
       const voiceSelect = document.getElementById('ttsVoiceSelect');
       if (!voiceSelect) return;
-
       const koreanVoices = ttsVoices.filter(v => v.lang.includes('ko') || v.lang.includes('KR'));
       voiceSelect.innerHTML = '';
-
       if (koreanVoices.length === 0) {
         const opt = document.createElement('option');
-        opt.value = '';
         opt.textContent = '기본 한국어 음성';
         voiceSelect.appendChild(opt);
         return;
       }
-
       koreanVoices.forEach((voice, index) => {
         const opt = document.createElement('option');
         opt.value = index;
-        
-        let genderTag = '🗣️ 일반';
-        const nameLower = voice.name.toLowerCase();
-        if (nameLower.includes('female') || nameLower.includes('heami') || nameLower.includes('sunhi') || nameLower.includes('yuna') || nameLower.includes('seoyeon') || nameLower.includes('여성')) {
-          genderTag = '👩 여성';
-        } else if (nameLower.includes('male') || nameLower.includes('jihoon') || nameLower.includes('minsu') || nameLower.includes('남성')) {
-          genderTag = '👨 남성';
-        }
-
-        opt.textContent = `${genderTag} (${voice.name})`;
-        if (index === 0) opt.selected = true;
+        opt.textContent = voice.name;
         voiceSelect.appendChild(opt);
       });
     }
+    if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = loadVoices; }
 
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-
-    // 단어 음성 출력 (속도 조절 값 반영)
     function speakCurrentWord(onEndCallback) {
-      if (!('speechSynthesis' in window)) {
+      if (!('speechSynthesis' in window) || activeList.length === 0) {
         if (onEndCallback) onEndCallback();
         return;
       }
-      if (activeList.length === 0) {
-        if (onEndCallback) onEndCallback();
-        return;
-      }
-
       const current = activeList[currentIndex];
-      const cleanText = current.text.replace(/^\d+\s*/, '');
-      const firstWord = cleanText.split(',')[0].trim();
+      if (!current) { if (onEndCallback) onEndCallback(); return; }
+      
+      const firstWord = current.text.replace(/^\d+\s*/, '').split(',')[0].trim();
+      const repeatSelect = document.getElementById('ttsRepeatCountSelect');
+      const totalRepeats = repeatSelect ? parseInt(repeatSelect.value) : 1;
+      let currentRepeat = 0;
 
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(firstWord);
-      utterance.lang = 'ko-KR';
-
-      const rateSelect = document.getElementById('ttsRateSelect');
-      utterance.rate = rateSelect ? parseFloat(rateSelect.value) : 1.0;
-
-      const voiceSelect = document.getElementById('ttsVoiceSelect');
-      if (voiceSelect && voiceSelect.value !== '') {
-        const koreanVoices = ttsVoices.filter(v => v.lang.includes('ko') || v.lang.includes('KR'));
-        const selectedVoice = koreanVoices[voiceSelect.value];
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-      }
-
       isSpeaking = true;
-      utterance.onend = () => {
-        isSpeaking = false;
-        if (onEndCallback) onEndCallback();
-      };
-      utterance.onerror = () => {
-        isSpeaking = false;
-        if (onEndCallback) onEndCallback();
-      };
 
-      window.speechSynthesis.speak(utterance);
+      function speakOnce() {
+        const utterance = new SpeechSynthesisUtterance(firstWord);
+        utterance.lang = 'ko-KR';
+        const rateSelect = document.getElementById('ttsRateSelect');
+        utterance.rate = rateSelect ? parseFloat(rateSelect.value) : 1.0;
+        const voiceSelect = document.getElementById('ttsVoiceSelect');
+        if (voiceSelect && voiceSelect.value !== '') {
+          const koreanVoices = ttsVoices.filter(v => v.lang.includes('ko') || v.lang.includes('KR'));
+          if (koreanVoices[voiceSelect.value]) utterance.voice = koreanVoices[voiceSelect.value];
+        }
+
+        utterance.onend = () => {
+          currentRepeat++;
+          if (currentRepeat < totalRepeats) {
+            setTimeout(speakOnce, 250);
+          } else {
+            isSpeaking = false;
+            if (onEndCallback) onEndCallback();
+          }
+        };
+        utterance.onerror = () => { isSpeaking = false; if (onEndCallback) onEndCallback(); };
+        window.speechSynthesis.speak(utterance);
+      }
+      speakOnce();
     }
 
-    function initWelcomeMessage() {
-      const msgElem = document.getElementById('welcomeMessage');
-      if (msgElem) {
-        const randomIndex = Math.floor(Math.random() * WELCOME_MESSAGES.length);
-        msgElem.innerText = WELCOME_MESSAGES[randomIndex];
-      }
+    function enterStudyRoom() {
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'flex';
+      loadVoices();
+      setStudyType(studyType);
+      showToast("✨ 학습장에 입장했습니다!");
     }
 
     function selectInitialStudyType(type) {
       studyType = type;
-      const btnTest = document.getElementById('btnChoiceTest');
-      const btnVocab = document.getElementById('btnChoiceVocab');
-      if (type === 'TEST') {
-        btnTest.classList.add('active');
-        btnVocab.classList.remove('active');
-      } else {
-        btnTest.classList.remove('active');
-        btnVocab.classList.add('active');
-      }
-    }
-
-    function enterStudyRoom() {
-      const overlay = document.getElementById('welcomeOverlay');
-      if (overlay) {
-        overlay.style.display = 'none';
-      }
-      loadVoices();
-      setStudyType(studyType);
+      document.getElementById('btnChoiceTest').classList.toggle('active', type==='TEST');
+      document.getElementById('btnChoiceVocab').classList.toggle('active', type==='VOCAB');
     }
 
     function setStudyType(type) {
       studyType = type;
       const btnTest = document.getElementById('btnSwitchTest');
       const btnVocab = document.getElementById('btnSwitchVocab');
-      const badge = document.getElementById('studyTypeBadge');
-      const btnRev = document.getElementById('btnReveal');
-      const timerRevealBox = document.getElementById('revealTimerBox');
-
-      if (studyType === 'TEST') {
-        btnTest.className = 'btn-type-toggle active';
-        btnVocab.className = 'btn-type-toggle';
-        badge.innerText = '📝 시험 모드';
-        badge.className = 'mode-badge';
-        btnRev.style.display = 'inline-block';
-        if (timerRevealBox) timerRevealBox.style.display = 'flex';
-      } else {
-        btnTest.className = 'btn-type-toggle';
-        btnVocab.className = 'btn-type-toggle active';
-        badge.innerText = '📖 단어장 모드 (정답 상시 공개)';
-        badge.className = 'mode-badge vocab';
-        btnRev.style.display = 'none';
-        if (timerRevealBox) timerRevealBox.style.display = 'none';
-      }
-
+      if (btnTest) btnTest.className = `btn-mode-pill ${type==='TEST'?'active':''}`;
+      if (btnVocab) btnVocab.className = `btn-mode-pill ${type==='VOCAB'?'active':''}`;
+      
+      const btnReveal = document.getElementById('btnReveal');
+      if (btnReveal) btnReveal.style.display = type==='TEST' ? 'inline-block' : 'none';
+      if (type === 'VOCAB') isRevealed = true;
+      else isRevealed = false;
       updateCard();
+      showToast(type === 'TEST' ? "📝 시험 모드로 전환되었습니다." : "📖 단어장 모드로 전환되었습니다.");
     }
 
     function initMobileResizer() {
       const resizer = document.getElementById('dragResizer');
       const sidebar = document.querySelector('.sidebar');
       if (!resizer || !sidebar) return;
+      let startY = 0, startH = 0, isDrag = false;
+      resizer.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isDrag = true;
+          startY = e.touches[0].clientY;
+          startH = sidebar.getBoundingClientRect().height;
+        }
+      }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        if (isDrag && e.touches.length === 1) {
+          let newH = startH + (e.touches[0].clientY - startY);
+          sidebar.style.height = `${Math.max(140, Math.min(newH, window.innerHeight * 0.75))}px`;
+        }
+      }, { passive: true });
+      window.addEventListener('touchend', () => { isDrag = false; });
+    }
 
-      let startY = 0;
-      let startHeight = 0;
-      let isDragging = false;
-
-      function onStart(clientY) {
-        if (window.innerWidth > 768) return;
-        isDragging = true;
-        startY = clientY;
-        startHeight = sidebar.getBoundingClientRect().height;
-        resizer.classList.add('dragging');
-        document.body.style.userSelect = 'none';
-      }
-
-      function onMove(clientY) {
-        if (!isDragging) return;
-        const deltaY = clientY - startY;
-        let newHeight = startHeight + deltaY;
-        const minH = 140;
-        const maxH = window.innerHeight * 0.75;
-        newHeight = Math.max(minH, Math.min(newHeight, maxH));
-        sidebar.style.height = `${newHeight}px`;
-      }
-
-      function onEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        resizer.classList.remove('dragging');
-        document.body.style.userSelect = '';
-      }
+    function initTopBannerResizer() {
+      const resizer = document.getElementById('topWordBannerResizer');
+      const banner = document.getElementById('topWordBanner');
+      if (!resizer || !banner) return;
+      
+      let startY = 0, startH = 0;
+      
+      const onDrag = (e) => {
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        banner.style.height = `${Math.max(80, startH + (clientY - startY))}px`;
+      };
+      
+      const stopDrag = () => {
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('touchend', stopDrag);
+      };
 
       resizer.addEventListener('mousedown', (e) => {
-        onStart(e.clientY);
-        const onMouseMove = (ev) => onMove(ev.clientY);
-        const onMouseUp = () => {
-          onEnd();
-          window.removeEventListener('mousemove', onMouseMove);
-          window.removeEventListener('mouseup', onMouseUp);
-        };
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
+        startY = e.clientY;
+        startH = banner.getBoundingClientRect().height;
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
       });
 
       resizer.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) onStart(e.touches[0].clientY);
-      }, { passive: true });
+        startY = e.touches[0].clientY;
+        startH = banner.getBoundingClientRect().height;
+        document.addEventListener('touchmove', onDrag, {passive: false});
+        document.addEventListener('touchend', stopDrag);
+      }, {passive: true});
+    }
 
-      window.addEventListener('touchmove', (e) => {
-        if (isDragging && e.touches.length === 1) onMove(e.touches[0].clientY);
-      }, { passive: true });
+    function initDescResizer() {
+      const resizer = document.getElementById('descResizer');
+      const container = document.getElementById('detailContainer');
+      if (!resizer || !container) return;
+      
+      let startY = 0, startH = 0;
+      
+      const onDrag = (e) => {
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        container.style.height = `${Math.max(60, startH + (clientY - startY))}px`;
+      };
+      
+      const stopDrag = () => {
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('touchend', stopDrag);
+      };
 
-      window.addEventListener('touchend', onEnd);
-      window.addEventListener('touchcancel', onEnd);
+      resizer.addEventListener('mousedown', (e) => {
+        startY = e.clientY;
+        startH = container.getBoundingClientRect().height;
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
+      });
+
+      resizer.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        startH = container.getBoundingClientRect().height;
+        document.addEventListener('touchmove', onDrag, {passive: false});
+        document.addEventListener('touchend', stopDrag);
+      }, {passive: true});
+    }
+
+    let isDescHidden = false;
+    function toggleDescVisibility() {
+      const container = document.getElementById('detailContainer');
+      const resizer = document.getElementById('descResizer');
+      const btn = document.getElementById('btnToggleDesc');
+      if (!container) return;
+      
+      isDescHidden = !isDescHidden;
+      if (isDescHidden) {
+        container.classList.add('collapsed');
+        if (resizer) resizer.classList.add('collapsed');
+        if (btn) btn.innerText = '🔼 설명창 보기';
+        showToast("설명창을 숨겼습니다.");
+      } else {
+        container.classList.remove('collapsed');
+        if (resizer) resizer.classList.remove('collapsed');
+        if (btn) btn.innerText = '🔽 설명창 숨기기';
+        showToast("설명창을 펼쳤습니다.");
+      }
     }
 
     function initCategorySelector() {
       const select = document.getElementById('catSelect');
       select.innerHTML = '';
-      let firstAvailableKey = null;
-
-      // CATEGORY_ORDER에 있는 키 우선 + sign_data.js에 정의된 나머지 모든 키 자동 포함
-      const baseOrder = (typeof CATEGORY_ORDER !== 'undefined') ? CATEGORY_ORDER : [];
+      const baseOrder = CATEGORY_ORDER || [];
       const allKeys = Object.keys(CATEGORIES);
       const orderList = [...new Set([...baseOrder.filter(k => k in CATEGORIES), ...allKeys])];
-
       orderList.forEach(key => {
         const cat = CATEGORIES[key];
         if (!cat || cat.hidden) return;
-
         const opt = document.createElement('option');
         opt.value = key;
         opt.textContent = cat.title;
-
-        if (cat.disabled) {
-          opt.disabled = true;
-          opt.textContent += " (비활성화)";
-        } else if (!firstAvailableKey) {
-          firstAvailableKey = key;
-        }
-
         select.appendChild(opt);
       });
-
-      if (!CATEGORIES[currentCatKey] || CATEGORIES[currentCatKey].hidden || CATEGORIES[currentCatKey].disabled) {
-        currentCatKey = firstAvailableKey || orderList[0];
-      }
+      currentCatKey = orderList[0];
       select.value = currentCatKey;
     }
 
-    function changeCategory(catKey) {
+    function changeCategory(key) {
       clearAllTimers();
-      currentCatKey = catKey;
+      currentCatKey = key;
+      currentMode = 'FULL';
+      document.getElementById('btnFullMode').style.display = 'none';
+      document.getElementById('btnReviewMode').style.display = 'inline-block';
+      document.getElementById('modeName').innerText = '전체 학습 모드';
+      document.getElementById('modeName').classList.remove('review');
       loadCategoryData();
+      showToast("과목이 변경되었습니다.");
     }
 
     function loadCategoryData() {
       const cat = CATEGORIES[currentCatKey] || { rawData: [] };
       wordList = (cat.rawData || []).map(item => {
-        const match = item.match(/^(\d+)\s*(.*)/);
-        return match ? { id: parseInt(match[1]), text: match[2] } : { id: 0, text: item };
+        const m = item.match(/^(\d+)\s*(.*)/);
+        return m ? { id: parseInt(m[1]), text: m[2] } : { id: 0, text: item };
       });
-      
       fullActiveList = [...wordList];
       if (isShuffled) shuffleArray(fullActiveList);
       activeList = [...fullActiveList];
       currentIndex = 0;
-      savedFullIndex = 0;
-      currentMode = 'FULL';
       selectedWords.clear();
       hiddenWords.clear();
       isGlobalHidden = false;
+      
       const ghc = document.getElementById('globalHideCheck');
       if (ghc) ghc.checked = false;
-      
-      updateOrderButtonUI();
+
+      if (activeTabId) {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab) tab.name = cat.title || "새 탭";
+        renderTabsUI();
+      }
+
       renderSidebar();
       updateCard();
-    }
-
-    function init() {
-      initWelcomeMessage();
-      initCategorySelector();
-      loadCategoryData();
-      initMobileResizer();
-      loadVoices();
     }
 
     function shuffleArray(arr) {
@@ -975,7 +1784,6 @@
     }
 
     function shuffleCurrentList() {
-      if (activeList.length === 0) return;
       clearAllTimers();
       shuffleArray(activeList);
       currentIndex = 0;
@@ -983,10 +1791,10 @@
       updateOrderButtonUI();
       updateCard();
       renderSidebar();
+      showToast("🔀 단어 목록을 셔플했습니다.");
     }
 
     function sortCurrentListNumeric() {
-      if (activeList.length === 0) return;
       clearAllTimers();
       activeList.sort((a, b) => a.id - b.id);
       currentIndex = 0;
@@ -994,36 +1802,20 @@
       updateOrderButtonUI();
       updateCard();
       renderSidebar();
+      showToast("🔢 번호순으로 정렬했습니다.");
     }
 
     function updateOrderButtonUI() {
-      const btnShuf = document.getElementById('btnShuffle');
-      const btnNum = document.getElementById('btnNumeric');
-      if (btnShuf && btnNum) {
-        if (isShuffled) {
-          btnShuf.className = 'btn-order-toggle active';
-          btnNum.className = 'btn-order-toggle';
-        } else {
-          btnShuf.className = 'btn-order-toggle';
-          btnNum.className = 'btn-order-toggle active';
-        }
-      }
+      document.getElementById('btnShuffle').className = `btn-order-toggle ${isShuffled ? 'active' : ''}`;
+      document.getElementById('btnNumeric').className = `btn-order-toggle ${!isShuffled ? 'active' : ''}`;
     }
 
-    let revealTimerId = null;
-    let nextTimerId = null;
-    let revealTimeLeft = 0;
-    let nextTimeLeft = 0;
+    let revealTimerId = null, nextTimerId = null, revealTimeLeft = 0, nextTimeLeft = 0;
 
     function clearAllTimers() {
       if (revealTimerId) clearInterval(revealTimerId);
       if (nextTimerId) clearInterval(nextTimerId);
-      revealTimerId = null;
-      nextTimerId = null;
-      const rCd = document.getElementById('revealCountdown');
-      const nCd = document.getElementById('nextCountdown');
-      if (rCd) rCd.innerText = '-';
-      if (nCd) nCd.innerText = '-';
+      revealTimerId = null; nextTimerId = null;
     }
 
     function initTimers() {
@@ -1031,212 +1823,147 @@
       if (activeList.length === 0 || isSpeaking) return;
       const useReveal = document.getElementById('useRevealTimer').checked;
       const useNext = document.getElementById('useNextTimer').checked;
-      const rCd = document.getElementById('revealCountdown');
-      const nCd = document.getElementById('nextCountdown');
 
       if (studyType === 'VOCAB') {
         if (useNext) startNextCountdown();
         return;
       }
 
-      if (!isRevealed) {
-        if (useReveal) {
-          revealTimeLeft = parseInt(document.getElementById('revealSecs').value) || 3;
-          rCd.innerText = `${revealTimeLeft}초`;
-          revealTimerId = setInterval(() => {
-            revealTimeLeft--;
-            if (revealTimeLeft > 0) {
-              rCd.innerText = `${revealTimeLeft}초`;
-            } else {
-              clearInterval(revealTimerId);
-              revealTimerId = null;
-              rCd.innerText = '열림';
-              toggleAnswer(true);
-            }
-          }, 1000);
-        }
-
-        if (!useReveal && useNext) {
-          startNextCountdown();
-        }
-      } else {
-        if (rCd) rCd.innerText = '열림';
-        if (useNext) {
-          startNextCountdown();
-        }
+      if (!isRevealed && useReveal) {
+        revealTimeLeft = parseInt(document.getElementById('revealSecs').value) || 3;
+        revealTimerId = setInterval(() => {
+          revealTimeLeft--;
+          if (revealTimeLeft <= 0) {
+            clearInterval(revealTimerId);
+            revealTimerId = null;
+            toggleAnswer(true);
+          }
+        }, 1000);
+      } else if (isRevealed && useNext) {
+        startNextCountdown();
       }
     }
 
     function startNextCountdown() {
       if (nextTimerId) clearInterval(nextTimerId);
-      const nCd = document.getElementById('nextCountdown');
       nextTimeLeft = parseInt(document.getElementById('nextSecs').value) || 2;
-      nCd.innerText = `${nextTimeLeft}초`;
-
       nextTimerId = setInterval(() => {
         if (isSpeaking) return;
-
         nextTimeLeft--;
-        if (nextTimeLeft > 0) {
-          nCd.innerText = `${nextTimeLeft}초`;
-        } else {
+        if (nextTimeLeft <= 0) {
           clearInterval(nextTimerId);
           nextTimerId = null;
-          nCd.innerText = '-';
-          if (currentIndex < activeList.length - 1) {
-            nextWord();
-          } else {
-            alert("🎉 마지막 단어입니다! 해당 과의 학습이 완료되었습니다.");
-          }
+          if (currentIndex < activeList.length - 1) nextWord();
         }
       }, 1000);
     }
 
-    function updateSidebarBadge(id) {
-      const itemElem = document.getElementById(`side-item-${id}`);
-      if (itemElem) {
-        const badge = itemElem.querySelector('.sidebar-badge');
-        if (badge) {
-          const st = statusMap[getWordKey(id)] || 'none';
-          const badgeLabel = st === 'known' ? '완료' : st === 'unknown' ? '모름' : st === 'review' ? '재확인' : '미체크';
-          badge.className = `sidebar-badge badge-${st}`;
-          badge.innerText = badgeLabel;
-        }
-      }
-    }
-
-    function cycleStatus(id, event) {
-      if (event) event.stopPropagation();
-      const key = getWordKey(id);
-      const currentStatus = statusMap[key] || 'none';
-      let nextStatus = 'known';
-      if (currentStatus === 'known') nextStatus = 'unknown';
-      else if (currentStatus === 'unknown') nextStatus = 'review';
-      else if (currentStatus === 'review') nextStatus = 'none';
-
-      if (nextStatus === 'none') delete statusMap[key];
-      else statusMap[key] = nextStatus;
-
-      updateSidebarBadge(id);
-      updateStats();
-
-      if (activeList[currentIndex]?.id === id) {
-        const tagElem = document.getElementById('statusTag');
-        tagElem.className = `status-tag tag-${nextStatus}`;
-        tagElem.innerText = nextStatus === 'known' ? '아는 문제' : nextStatus === 'unknown' ? '모르는 문제' : nextStatus === 'review' ? '재확인' : '';
-      }
-    }
-
-    function toggleGlobalHide(state) {
-      isGlobalHidden = state;
-      if (isGlobalHidden) {
-        wordList.forEach(w => hiddenWords.add(w.id));
-      } else {
-        hiddenWords.clear();
-      }
-      renderSidebar();
-    }
-
-    function toggleHideWord(id, event) {
-      if (event) event.stopPropagation();
-      if (hiddenWords.has(id)) hiddenWords.delete(id);
-      else hiddenWords.add(id);
-      renderSidebar();
-    }
-
-    function selectAllFiltered() {
-      const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
-      wordList.forEach(w => {
-        if (!query || w.text.toLowerCase().includes(query)) selectedWords.add(w.id);
-      });
-      renderSidebar();
-    }
-
-    function deselectAllFiltered() {
-      const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
-      wordList.forEach(w => {
-        if (!query || w.text.toLowerCase().includes(query)) selectedWords.delete(w.id);
-      });
-      renderSidebar();
-    }
-
-    function handleMouseDown(e, id) {
-      if (e.target.tagName === 'BUTTON' || e.target.classList.contains('sidebar-badge')) return;
-      const cb = document.getElementById(`cb-${id}`);
-      isSelectingDrag = !cb.checked;
-      cb.checked = isSelectingDrag;
-      updateSet(id, isSelectingDrag);
-    }
-
-    function handleMouseEnter(e, id) {
-      if (e.buttons === 1 && isSelectingDrag !== null) { 
-        const cb = document.getElementById(`cb-${id}`);
-        cb.checked = isSelectingDrag;
-        updateSet(id, isSelectingDrag);
-      }
-    }
-
-    function updateSet(id, state) {
-      if(state) selectedWords.add(id);
-      else selectedWords.delete(id);
-    }
-
-    window.addEventListener('mouseup', () => { isSelectingDrag = null; });
-
-    function jumpToWord(id) {
-      if (isSpeaking) return;
-      clearAllTimers();
-      const idx = activeList.findIndex(w => w.id === id);
-      if (idx !== -1) {
-        currentIndex = idx;
-        updateCard();
-      } else {
-        if(confirm("현재 학습 목록에 없는 단어입니다. 전체 모드로 전환하여 해당 단어로 이동할까요?")) {
-           returnToFullMode();
-           const fullIdx = activeList.findIndex(w => w.id === id);
-           if(fullIdx !== -1) {
-             currentIndex = fullIdx;
-             updateCard();
-           }
-        }
-      }
-    }
-
-    function studySelected() {
-      if (isSpeaking) return;
-      if (selectedWords.size === 0) {
-        alert("선택된 단어가 없습니다. 단어를 체크해주세요.");
-        return;
-      }
-      clearAllTimers();
-      if (currentMode === 'FULL') savedFullIndex = currentIndex; 
-      
-      currentMode = 'CUSTOM';
-      activeList = wordList.filter(w => selectedWords.has(w.id));
-      if (isShuffled) shuffleArray(activeList);
-      currentIndex = 0;
-      updateCard();
-    }
-
+    // 마킹 처리 및 오답노트 순서 유지 / 완벽 정복 감지 로직 수정
     function markCurrent(type) {
       if (activeList.length === 0 || isSpeaking) return;
       const current = activeList[currentIndex];
-      statusMap[getWordKey(current.id)] = type;
-
-      const tagElem = document.getElementById('statusTag');
-      tagElem.className = `status-tag tag-${type}`;
-      tagElem.innerText = type === 'known' ? '아는 문제' : type === 'unknown' ? '모르는 문제' : type === 'review' ? '재확인' : '';
-
-      updateSidebarBadge(current.id);
+      
+      if (type === 'none') {
+        delete statusMap[getWordKey(current.id)];
+        showToast("체크를 해제했습니다.");
+      } else {
+        statusMap[getWordKey(current.id)] = type;
+        const msg = type === 'known' ? '아는 문제로 체크' : type === 'unknown' ? '모르는 문제로 체크' : '재확인 문제로 체크';
+        showToast(`✔️ ${msg}`);
+      }
+      
       updateStats();
-      nextWord();
+      renderSidebar();
+
+      // 오답노트 모드 중 모든 문제가 '아는 문제'로 해결되었는지 확인
+      const remainingUnknownReview = wordList.filter(w => statusMap[getWordKey(w.id)] === 'unknown' || statusMap[getWordKey(w.id)] === 'review');
+
+      if (currentMode === 'REVIEW' && remainingUnknownReview.length === 0 && type === 'known') {
+        updateCard();
+        showEndResultModal();
+        return;
+      }
+
+      // 마지막 문제 도달 시 팝업창 출력
+      if (currentIndex === activeList.length - 1) {
+        updateCard();
+        if (type !== 'none') {
+          showEndResultModal();
+        }
+      } else {
+        if (type !== 'none') {
+          nextWord();
+        } else {
+          updateCard();
+        }
+      }
+    }
+
+    function showEndResultModal() {
+      let known = 0, unknown = 0, review = 0;
+      wordList.forEach(w => {
+        const st = statusMap[getWordKey(w.id)];
+        if (st === 'known') known++;
+        else if (st === 'unknown') unknown++;
+        else if (st === 'review') review++;
+      });
+
+      const summaryElem = document.getElementById('endResultSummary');
+      if (summaryElem) {
+        summaryElem.innerHTML = `
+          <div>• 전체 단어: <b>${wordList.length}</b>개</div>
+          <div>• 아는 단어: <b style="color:#16a34a;">${known}</b>개</div>
+          <div>• 모르는 단어: <b style="color:#dc2626;">${unknown}</b>개</div>
+          <div>• 재확인 단어: <b style="color:#d97706;">${review}</b>개</div>
+        `;
+      }
+
+      const titleElem = document.getElementById('endModalTitle');
+      const descElem = document.getElementById('endModalDesc');
+      const actionBtn = document.getElementById('endModalActionBtn');
+
+      endModalIsAllKnown = (unknown + review === 0);
+
+      if (endModalIsAllKnown) {
+        if (titleElem) titleElem.innerText = "🏆 오답노트 완벽 정복!";
+        if (descElem) descElem.innerText = "모든 단어를 '아는 문제'로 완료하셨습니다. 완벽합니다!";
+        if (actionBtn) {
+          actionBtn.innerText = "🏠 전체 학습 모드로 복귀";
+          actionBtn.style.background = "#3b82f6";
+        }
+      } else {
+        if (titleElem) titleElem.innerText = currentMode === 'REVIEW' ? "✏️ 오답노트 회차 완료!" : "🎉 학습 완료!";
+        if (descElem) descElem.innerText = `아직 복습이 필요한 단어가 ${unknown + review}개 남아있습니다.`;
+        if (actionBtn) {
+          actionBtn.innerText = "✏️ 남은 오답노트 바로 시작하기";
+          actionBtn.style.background = "#8b5cf6";
+        }
+      }
+
+      document.getElementById('endModal').style.display = 'flex';
+      showToast(endModalIsAllKnown ? "🏆 모든 문제를 마스터했습니다!" : "🎉 학습 결과 확인");
+    }
+
+    function handleEndModalAction() {
+      document.getElementById('endModal').style.display = 'none';
+      if (endModalIsAllKnown) {
+        returnToFullMode();
+      } else {
+        startReviewMode();
+      }
+    }
+
+    function closeEndModal() {
+      document.getElementById('endModal').style.display = 'none';
     }
 
     function nextWord() {
       if (isSpeaking) return;
       clearAllTimers();
+      currentVideoPlayCount = 0;
       if (currentIndex < activeList.length - 1) {
         currentIndex++;
+        if (studyType === 'VOCAB') isRevealed = true;
         updateCard();
       }
     }
@@ -1244,8 +1971,10 @@
     function prevWord() {
       if (isSpeaking) return;
       clearAllTimers();
+      currentVideoPlayCount = 0;
       if (currentIndex > 0) {
         currentIndex--;
+        if (studyType === 'VOCAB') isRevealed = true;
         updateCard();
       }
     }
@@ -1259,203 +1988,79 @@
         else if (st === 'review') review++;
         else unchecked++;
       });
-
       document.getElementById('cntKnown').innerText = known;
       document.getElementById('cntUnknown').innerText = unknown;
       document.getElementById('cntReview').innerText = review;
       document.getElementById('sideUncheckedCnt').innerText = unchecked;
-
       document.getElementById('mTotal').innerText = wordList.length;
       document.getElementById('mChecked').innerText = wordList.length - unchecked;
       document.getElementById('mKnown').innerText = known;
       document.getElementById('mUnknown').innerText = unknown;
-      document.getElementById('mReview').innerText = review;
-      document.getElementById('mUnchecked').innerText = unchecked;
-
-      const uncheckedList = wordList.filter(w => !statusMap[getWordKey(w.id)]).map(w => w.id + '번(' + w.text.split(',')[0] + ')');
-      document.getElementById('mUncheckedList').innerText = uncheckedList.length ? uncheckedList.join(', ') : '없음 (전부 체크 완료)';
-    }
-
-    function startLearning() {
-      if (isSpeaking) return;
-      if (wordList.length === 0) {
-        alert("현재 카테고리에 등록된 단어가 없습니다.");
-        return;
-      }
-      if (confirm("새로운 셔플로 전체 학습을 시작하시겠습니까? (기존 채점 상태는 유지됩니다)")) {
-        clearAllTimers();
-        fullActiveList = [...wordList];
-        shuffleArray(fullActiveList);
-        activeList = [...fullActiveList];
-        currentIndex = 0;
-        savedFullIndex = 0;
-        currentMode = 'FULL';
-        isShuffled = true;
-        updateOrderButtonUI();
-        updateCard();
-        renderSidebar();
-      }
-    }
-
-    function startReviewMode() {
-      if (isSpeaking) return;
-      const targets = wordList.filter(w => {
-        const st = statusMap[getWordKey(w.id)];
-        return st === 'unknown' || st === 'review';
-      });
-      if (targets.length === 0) {
-        alert("모르는 문제나 재확인할 문제가 없습니다.");
-        return;
-      }
-      clearAllTimers();
-      if (currentMode === 'FULL') savedFullIndex = currentIndex; 
-      
-      currentMode = 'REVIEW';
-      activeList = [...targets];
-      if (isShuffled) shuffleArray(activeList);
-      currentIndex = 0;
-      updateCard();
-    }
-
-    function returnToFullMode() {
-      if (isSpeaking) return;
-      clearAllTimers();
-      currentMode = 'FULL';
-      activeList = [...fullActiveList];
-      currentIndex = Math.min(savedFullIndex, activeList.length - 1);
-      updateCard();
-    }
-
-    function getWordDetailHtml(current) {
-      const cat = CATEGORIES[currentCatKey] || {};
-      const descText = cat.descriptions ? cat.descriptions[current.id] : null;
-      const combText = cat.combinations ? cat.combinations[current.id] : null;
-      const imgs = cat.imageMap ? cat.imageMap[current.id] : null;
-      const vids = cat.videoMap ? cat.videoMap[current.id] : null;
-      const linkUrl = cat.urls ? cat.urls[current.id] : null;
-
-      let imgHtml = '';
-      if (imgs && imgs.length > 0) {
-        const imgBoxes = imgs.map(src => `<div class="img-box"><img src="${src}" alt="수어 사진"></div>`).join('');
-        imgHtml = `<div class="img-container">${imgBoxes}</div>`;
-      }
-
-      let vidHtml = '';
-      if (vids && vids.length > 0) {
-        const vidBoxes = vids.map(src => `
-          <div class="img-box" style="background:#000;">
-            <video src="${src}" autoplay loop muted playsinline controls></video>
-          </div>
-        `).join('');
-        vidHtml = `<div class="img-container">${vidBoxes}</div>`;
-      }
-
-      let infoHtml = '';
-      if (descText) {
-        infoHtml += `<div class="desc-text">📖 <b>동작 설명:</b> ${descText}</div>`;
-      }
-      
-      if (combText) {
-        infoHtml += `<div class="desc-text" style="background: #eef2ff; border-color: #c7d2fe; color: #3730a3; margin-top: 5px;">🔗 <b>단어 결합:</b> ${combText}</div>`;
-      }
-
-      let linkHtml = '';
-      if (linkUrl) {
-        linkHtml = `
-          <div class="dict-link-wrap">
-            <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="dict-link-btn">
-              🌐 국립국어원 사전 상세페이지 보기 ↗
-            </a>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="answer-container">
-          ${infoHtml}
-          ${vidHtml}
-          ${imgHtml}
-          ${linkHtml}
-        </div>
-      `;
+      const uncheckedList = wordList.filter(w => !statusMap[getWordKey(w.id)]).map(w => `${w.id}번`);
+      document.getElementById('mUncheckedList').innerText = uncheckedList.length ? uncheckedList.join(', ') : '전부 완료';
     }
 
     function updateCard() {
-      const cat = CATEGORIES[currentCatKey] || { title: "과목 선택" };
-      const modeBadge = document.getElementById('modeName');
-      const btnFullMode = document.getElementById('btnFullMode');
-      const btnReviewMode = document.getElementById('btnReviewMode');
-      const wordBox = document.getElementById('display');
-
-      if (activeList.length === 0) {
-        wordBox.innerHTML = `
-          <div id="statusTag"></div>
-          <div id="wordContent" style="color: #64748b; font-size: 1.1rem; line-height: 1.6;">
-            📂 <b>${cat.title}</b><br>
-            등록된 단어가 없습니다.<br>
-            <code>sign_data.js</code> 파일 내 해당 카테고리에 단어 데이터를 추가해주세요.
-          </div>
-        `;
-        document.getElementById('progress').innerText = "단어 0 / 0";
-        modeBadge.innerText = `${cat.title} | 비어있음`;
-        btnFullMode.style.display = 'none';
-        btnReviewMode.style.display = 'none';
-        updateStats();
+      const cat = CATEGORIES[currentCatKey] || {};
+      const current = activeList[currentIndex];
+      
+      if (!current) {
+        document.getElementById('progress').innerText = `단어 0 / 0`;
+        document.getElementById('topWordTitle').innerText = `선택된 학습 단어가 없습니다.`;
         return;
       }
 
-      const current = activeList[currentIndex];
-      const status = statusMap[getWordKey(current.id)] || 'none';
-
-      if (currentMode === 'REVIEW') {
-        modeBadge.innerText = `${cat.title} | 오답노트 복습 모드`;
-        modeBadge.className = "mode-badge review";
-        btnFullMode.style.display = 'block';
-        btnReviewMode.style.display = 'none';
-      } else if (currentMode === 'CUSTOM') {
-        modeBadge.innerText = `${cat.title} | ✨ 맞춤 선택 학습`;
-        modeBadge.className = "mode-badge custom";
-        btnFullMode.style.display = 'block';
-        btnReviewMode.style.display = 'block';
-      } else {
-        modeBadge.innerText = `${cat.title} | 전체 학습 모드`;
-        modeBadge.className = "mode-badge";
-        btnFullMode.style.display = 'none';
-        btnReviewMode.style.display = 'block';
-      }
+      const id = current.id;
+      const strId = String(id);
+      const status = statusMap[getWordKey(id)] || 'none';
 
       document.getElementById('progress').innerText = `단어 ${currentIndex + 1} / ${activeList.length}`;
+      document.getElementById('topWordTitle').innerText = `${id}. ${current.text}`;
+      
+      document.querySelectorAll('.q-mark').forEach(btn => btn.classList.remove('active'));
+      if (status === 'known') document.getElementById('qm-known').classList.add('active');
+      else if (status === 'unknown') document.getElementById('qm-unknown').classList.add('active');
+      else if (status === 'review') document.getElementById('qm-review').classList.add('active');
+      else document.getElementById('qm-uncheck').classList.add('active');
 
-      const statusTagHtml = `
-        <div id="statusTag" class="status-tag tag-${status}">
-          ${status === 'known' ? '아는 문제' : status === 'unknown' ? '모르는 문제' : status === 'review' ? '재확인' : ''}
-        </div>
-      `;
+      const dictMediaTarget = document.getElementById('dictMediaTarget');
+      let rawVids = cat.videoMap ? (cat.videoMap[id] || cat.videoMap[strId]) : null;
+      let vidSrc = null;
+      if (rawVids) {
+        vidSrc = Array.isArray(rawVids) ? rawVids[0] : rawVids;
+        vidSrc = vidSrc.replace(/^http:\/\//i, 'https://');
+      }
 
-      if (studyType === 'VOCAB') {
-        isRevealed = true;
-        wordBox.innerHTML = `
-          ${statusTagHtml}
-          <div id="wordContent">
-            <div style="font-size:1.4rem;">${current.id}. ${current.text}</div>
-            ${getWordDetailHtml(current)}
-          </div>
-        `;
+      const detailContent = document.getElementById('detailContent');
+
+      if (studyType === 'TEST' && !isRevealed) {
+        dictMediaTarget.innerHTML = `<div style="color:#94a3b8; font-size:1.15rem; font-weight:bold;">🎬 [정답 확인]을 누르면 표준 수어 영상이 재생됩니다.</div>`;
+        detailContent.innerHTML = `<div style="color:#64748b; font-size:1rem; font-weight:600;">[Space] 또는 [정답] 버튼을 누르면 상세 설명이 열립니다.</div>`;
       } else {
-        isRevealed = false;
-        wordBox.innerHTML = `
-          ${statusTagHtml}
-          <div id="wordContent">
-            <div style="font-size:1.4rem;">${current.id}. ${current.text}</div>
+        if (vidSrc) {
+          dictMediaTarget.innerHTML = `<video src="${vidSrc}" autoplay loop muted playsinline></video>`;
+          currentVideoPlayCount = 0;
+          applyVideoStyles();
+        } else {
+          dictMediaTarget.innerHTML = `<div style="color:#ef4444; font-weight:bold;">등록된 표준 수어 영상이 없습니다.</div>`;
+        }
+
+        const descText = cat.descriptions ? (cat.descriptions[id] || cat.descriptions[strId]) : '';
+        const combText = cat.combinations ? (cat.combinations[id] || cat.combinations[strId]) : '';
+        const linkUrl = cat.urls ? (cat.urls[id] || cat.urls[strId]) : '';
+
+        detailContent.innerHTML = `
+          <div class="answer-container">
+            ${descText ? `<div class="desc-text">📖 <b>동작 설명:</b> ${descText}</div>` : ''}
+            ${combText ? `<div class="desc-text" style="background:#eef2ff; color:#3730a3;">🔗 <b>단어 결합:</b> ${combText}</div>` : ''}
+            ${linkUrl ? `<div class="dict-link-wrap"><a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="dict-link-btn">🌐 국립국어원 사전 상세페이지 보기 ↗</a></div>` : ''}
           </div>
         `;
       }
 
       const autoPlayCheck = document.getElementById('autoPlayTts');
       if (autoPlayCheck && autoPlayCheck.checked) {
-        speakCurrentWord(() => {
-          initTimers();
-        });
+        speakCurrentWord(() => { initTimers(); });
       } else {
         initTimers();
       }
@@ -1466,41 +2071,60 @@
 
     function toggleAnswer(isAuto = false) {
       if (activeList.length === 0 || studyType === 'VOCAB' || isSpeaking) return;
-      const current = activeList[currentIndex];
-      const wordContent = document.getElementById('wordContent');
       isRevealed = isAuto ? true : !isRevealed;
+      updateCard();
+      if (!isAuto) showToast(isRevealed ? "💡 정답을 열었습니다." : "정답을 숨겼습니다.");
+    }
 
-      if (isRevealed) {
-        if (revealTimerId) clearInterval(revealTimerId);
-        const rCd = document.getElementById('revealCountdown');
-        if (rCd) rCd.innerText = '열림';
+    function handleMouseDown(e, id) {
+      if (e.target.tagName === 'BUTTON' || e.target.classList.contains('sidebar-badge') || e.target.classList.contains('mask-box-btn')) return;
+      const cb = document.getElementById(`cb-${id}`);
+      isSelectingDrag = !cb.checked;
+      cb.checked = isSelectingDrag;
+      updateSet(id, isSelectingDrag);
+    }
 
-        wordContent.innerHTML = `
-          <div style="font-size:1.4rem;">${current.id}. ${current.text}</div>
-          ${getWordDetailHtml(current)}
-        `;
-
-        const useNext = document.getElementById('useNextTimer').checked;
-        if (useNext) {
-          startNextCountdown();
+    function handleMouseEnter(e, id) {
+      if (e.buttons === 1 && isSelectingDrag !== null) { 
+        const cb = document.getElementById(`cb-${id}`);
+        if (cb) {
+          cb.checked = isSelectingDrag;
+          updateSet(id, isSelectingDrag);
         }
-      } else {
-        wordContent.innerHTML = `<div style="font-size:1.4rem;">${current.id}. ${current.text}</div>`;
-        initTimers();
       }
+    }
+
+    function updateSet(id, state) {
+      if (state) selectedWords.add(id);
+      else selectedWords.delete(id);
+    }
+    window.addEventListener('mouseup', () => { isSelectingDrag = null; });
+
+    function checkWordRange() {
+      const startVal = parseInt(document.getElementById('rangeStart').value);
+      const endVal = parseInt(document.getElementById('rangeEnd').value);
+      if (isNaN(startVal) || isNaN(endVal)) {
+        alert("시작 번호와 끝 번호를 올바르게 입력해주세요.");
+        return;
+      }
+      const min = Math.min(startVal, endVal);
+      const max = Math.max(startVal, endVal);
+      wordList.forEach(w => {
+        if (w.id >= min && w.id <= max) selectedWords.add(w.id);
+      });
+      renderSidebar();
+      showToast(`${min}번부터 ${max}번까지 선택되었습니다.`);
     }
 
     function renderSidebar() {
       const sidebarList = document.getElementById('sidebarList');
       sidebarList.innerHTML = '';
       const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
-      const orderType = document.getElementById('sidebarOrder')?.value || 'study';
 
-      let displayList = (orderType === 'study') ? [...activeList] : [...wordList];
+      let displayList = [...activeList];
 
       displayList.forEach((item) => {
         if (query && !item.text.toLowerCase().includes(query)) return;
-        
         const div = document.createElement('div');
         const isActive = activeList.length > 0 && activeList[currentIndex]?.id === item.id;
         div.className = `sidebar-item ${isActive ? 'active' : ''}`;
@@ -1508,101 +2132,202 @@
 
         const st = statusMap[getWordKey(item.id)] || 'none';
         const badgeLabel = st === 'known' ? '완료' : st === 'unknown' ? '모름' : st === 'review' ? '재확인' : '미체크';
-
         const isHidden = hiddenWords.has(item.id);
         const isChecked = selectedWords.has(item.id) ? 'checked' : '';
 
         div.innerHTML = `
           <div class="checkbox-wrap" onmousedown="handleMouseDown(event, ${item.id})" onmouseenter="handleMouseEnter(event, ${item.id})">
-            <input type="checkbox" id="cb-${item.id}" ${isChecked} style="pointer-events: none;">
+            <input type="checkbox" id="cb-${item.id}" ${isChecked} style="pointer-events:none;">
           </div>
           <div class="word-text ${isHidden ? 'blurred' : ''}" onclick="jumpToWord(${item.id})">
             ${item.id}. ${item.text.split(',')[0]}
           </div>
-          <button class="eye-btn" onclick="toggleHideWord(${item.id}, event)">
-            ${isHidden ? '🙈' : '👁️'}
+          <button type="button" class="mask-box-btn ${isHidden ? 'hidden-mode' : 'visible-mode'}" onclick="toggleHideWord(${item.id}, event)" title="${isHidden ? '단어명 마스킹 해제' : '단어명 가리기'}">
+            <span>${isHidden ? '🙈' : '👁️'}</span>
+            <span>${isHidden ? '숨김' : '확인'}</span>
           </button>
-          <span class="sidebar-badge badge-${st}" title="클릭하여 상태 변경" onclick="cycleStatus(${item.id}, event)">${badgeLabel}</span>
+          <span class="sidebar-badge badge-${st}">${badgeLabel}</span>
         `;
         sidebarList.appendChild(div);
       });
     }
 
+    function jumpToWord(id) {
+      clearAllTimers();
+      currentVideoPlayCount = 0;
+      const idx = activeList.findIndex(w => w.id === id);
+      if (idx !== -1) {
+        currentIndex = idx;
+        if (studyType !== 'VOCAB') isRevealed = false;
+        updateCard();
+      }
+    }
+
     function updateSidebarActive() {
       const activeItem = activeList[currentIndex];
       if (!activeItem) return;
-      
       document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
       const activeElem = document.getElementById(`side-item-${activeItem.id}`);
-      
-      if (activeElem) {
-        activeElem.classList.add('active');
-
-        if (window.innerWidth > 768) {
-          const listContainer = document.getElementById('sidebarList');
-          if (listContainer) {
-            const itemOffsetTop = activeElem.offsetTop - listContainer.offsetTop;
-            if (itemOffsetTop < listContainer.scrollTop) {
-              listContainer.scrollTop = itemOffsetTop;
-            } else if (itemOffsetTop + activeElem.clientHeight > listContainer.scrollTop + listContainer.clientHeight) {
-              listContainer.scrollTop = itemOffsetTop + activeElem.clientHeight - listContainer.clientHeight;
-            }
-          }
-        }
-      }
+      if (activeElem) activeElem.classList.add('active');
     }
 
+    function selectAllFiltered() { wordList.forEach(w => selectedWords.add(w.id)); renderSidebar(); showToast("전체 단어를 선택했습니다."); }
+    function deselectAllFiltered() { selectedWords.clear(); renderSidebar(); showToast("단어 선택을 해제했습니다."); }
+    
+    function studySelected() {
+      if (selectedWords.size === 0) { alert("선택된 단어가 없습니다."); return; }
+      clearAllTimers();
+      currentMode = 'CUSTOM';
+      activeList = wordList.filter(w => selectedWords.has(w.id));
+      if (isShuffled) shuffleArray(activeList);
+      currentIndex = 0;
+      updateCard();
+      renderSidebar();
+      showToast(`선택한 ${activeList.length}개 단어 맞춤 학습 시작`);
+    }
+
+    function toggleGlobalHide(val) {
+      if (val) wordList.forEach(w => hiddenWords.add(w.id));
+      else hiddenWords.clear();
+      renderSidebar();
+      showToast(val ? "🙈 전체 단어를 마스킹했습니다." : "👁️ 마스킹을 해제했습니다.");
+    }
+    
+    function toggleHideWord(id, e) {
+      e.stopPropagation();
+      if (hiddenWords.has(id)) hiddenWords.delete(id);
+      else hiddenWords.add(id);
+      renderSidebar();
+    }
+    
     function resetAll() {
-      if (isSpeaking) return;
-      const catTitle = CATEGORIES[currentCatKey]?.title || "현재 과";
-      if (confirm(`[${catTitle}]의 모든 채점 상태를 초기화하고 셔플하시겠습니까?`)) {
+      if (confirm("모든 채점 상태를 초기화할까요?")) {
         clearAllTimers();
-        wordList.forEach(w => {
-          delete statusMap[getWordKey(w.id)];
-        });
+        wordList.forEach(w => delete statusMap[getWordKey(w.id)]);
         loadCategoryData();
+        showToast("마킹 상태를 초기화했습니다.");
       }
     }
-
+    
     function togglePauseModal() {
-      const modal = document.getElementById('pauseModal');
-      modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+      const m = document.getElementById('pauseModal');
+      m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
     }
 
-    function changeImgSize(val) {
-      document.documentElement.style.setProperty('--img-scale', val);
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (isSpeaking) return; 
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-      const key = e.key.toLowerCase();
+    function startLearning() {
+      clearAllTimers();
+      currentMode = 'FULL';
+      document.getElementById('btnFullMode').style.display = 'none';
+      document.getElementById('btnReviewMode').style.display = 'inline-block';
+      document.getElementById('modeName').innerText = '전체 학습 모드';
+      document.getElementById('modeName').classList.remove('review');
       
-      if (key === '1' || key === 'a') markCurrent('known');
-      else if (key === '2' || key === 's') markCurrent('unknown');
-      else if (key === '3' || key === 'd') markCurrent('review');
-      else if (key === ' ' || key === 'w') { 
-        if (studyType === 'TEST') {
-          e.preventDefault(); 
-          toggleAnswer(); 
-        }
+      fullActiveList = [...wordList];
+      shuffleArray(fullActiveList);
+      activeList = [...fullActiveList];
+      currentIndex = 0;
+      if (studyType === 'VOCAB') isRevealed = true;
+      updateCard();
+      renderSidebar();
+      showToast("🔄 처음부터 새로 셔플하여 학습을 시작합니다.");
+    }
+
+    // 오답노트 모드 진입 시 설정된 정렬(셔플/번호순)을 적용하여 고정 리스트 생성
+    function startReviewMode() {
+      const targets = wordList.filter(w => statusMap[getWordKey(w.id)] === 'unknown' || statusMap[getWordKey(w.id)] === 'review');
+      if (targets.length === 0) { alert("오답/재확인 단어가 없습니다."); return; }
+      clearAllTimers();
+      currentMode = 'REVIEW';
+      activeList = [...targets];
+      
+      if (isShuffled) {
+        shuffleArray(activeList);
+      } else {
+        activeList.sort((a, b) => a.id - b.id);
       }
-      else if (key === 'q') prevWord();
-      else if (key === 'e') nextWord();
-      else if (key === 'p') togglePauseModal();
-      else if (key === 'r') resetAll();
-      else if (key === 'n') startLearning(); 
-      else if (key === 'o') {                
-        if (currentMode === 'FULL') startReviewMode();
-        else returnToFullMode();
-      }
-      else if (key === 'escape') {
+      
+      currentIndex = 0;
+      if (studyType === 'VOCAB') isRevealed = true;
+      
+      document.getElementById('btnFullMode').style.display = 'inline-block';
+      document.getElementById('btnReviewMode').style.display = 'none';
+      document.getElementById('modeName').innerText = '✏️ 오답노트 모드';
+      document.getElementById('modeName').classList.add('review');
+      
+      updateOrderButtonUI();
+      updateCard();
+      renderSidebar();
+      showToast(`✏️ 오답/재확인 ${activeList.length}개 단어 집중 학습 시작!`);
+    }
+
+    function returnToFullMode() {
+      clearAllTimers();
+      currentMode = 'FULL';
+      activeList = [...fullActiveList];
+      currentIndex = 0;
+      if (studyType === 'VOCAB') isRevealed = true;
+      
+      document.getElementById('btnFullMode').style.display = 'none';
+      document.getElementById('btnReviewMode').style.display = 'inline-block';
+      document.getElementById('modeName').innerText = '전체 학습 모드';
+      document.getElementById('modeName').classList.remove('review');
+      
+      updateCard();
+      renderSidebar();
+      showToast("🏠 전체 학습 모드로 복귀했습니다.");
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape') {
+        toggleSettingsModal(false);
         const pModal = document.getElementById('pauseModal');
         if (pModal) pModal.style.display = 'none';
+        const eModal = document.getElementById('endModal');
+        if (eModal) eModal.style.display = 'none';
+        return;
       }
+
+      const welcome = document.getElementById('welcomeScreen');
+      if (welcome && welcome.style.display !== 'none') {
+        const k = e.key;
+        if (k === '1') selectInitialStudyType('TEST');
+        if (k === '2') selectInitialStudyType('VOCAB');
+        if (k === 'Enter') enterStudyRoom();
+        return;
+      }
+
+      const k = e.key.toLowerCase();
+
+      if (e.key === ' ' || k === 'w') { 
+        e.preventDefault(); 
+        toggleAnswer(); 
+        return; 
+      }
+
+      if (k === '1' || k === 'a') { e.preventDefault(); markCurrent('known'); }
+      if (k === '2' || k === 's') { e.preventDefault(); markCurrent('unknown'); }
+      if (k === '3' || k === 'd') { e.preventDefault(); markCurrent('review'); }
+      if (k === 'q') prevWord();
+      if (k === 'e') nextWord();
+      if (k === 'p') togglePauseModal();
+      if (k === 'r') resetAll();
+      if (k === 'n') startLearning();
+      
+      if (k === 'o') startReviewMode();
+      if (k === 'i') returnToFullMode();
     });
 
-    init();
+    window.onload = () => {
+      initCategorySelector();
+      createNewTab();
+      initMobileResizer();
+      initTopBannerResizer();
+      initViewportResizer();
+      initDescResizer();
+      loadVoices();
+    };
   </script>
 </body>
 </html>
