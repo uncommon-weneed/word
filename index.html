@@ -1068,8 +1068,8 @@
               <option value="2">2회 반복</option>
               <option value="3">3회 반복</option>
               <option value="4">4회 반복</option>
-              <option value="5">5회 반복</option>
-              <option value="999" selected>무한 반복</option>
+              <option value="5" selected>5회 반복</option>
+              <option value="999" >무한 반복</option>
             </select>
           </div>
         </div>
@@ -1190,7 +1190,7 @@
     let ttsVoices = [], isSpeaking = false;
     let isMirrored = false, currentVideoSpeed = 1.0;
     let isVideoPlaying = true;
-    let targetVideoLoopCount = 5;
+    let targetVideoLoopCount = 999;
     let currentVideoPlayCount = 0;
     let currentVideoSession = 0;
 
