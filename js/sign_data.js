@@ -6275,7 +6275,7 @@ videoMap: {
       },
 
       "cat13": {
-        title: "제15과 기타 3",
+        title: "기타 3",
         disabled: false,
         hidden: false,
         rawData: [
@@ -7345,7 +7345,7 @@ videoMap: {
       },
 
       "cat14": {
-        title: "제16과 기타 4",
+        title: "기타 4",
         disabled: false,
         hidden: false,
         rawData: [
@@ -8431,7 +8431,7 @@ videoMap: {
       },
 
       "cat15": {
-        title: "제17과 기타 5",
+        title: "기타 5",
         disabled: false,
         hidden: false,
         rawData: [
@@ -9314,8 +9314,8 @@ videoMap: {
           248: ["https://sldict.korean.go.kr/multimedia/multimedia_files/convert/20221013/1039336/MOV000360353_700X466.mp4"]
         }
       },
-            "cat13": {
-        title: "제 14과 (준비중)",
+            "cat16": {
+        title: "제 16과 (준비중)",
         disabled: false,
         hidden: true,
         rawData: [],
@@ -9325,8 +9325,8 @@ videoMap: {
         urls: {},
         videoMap: {}
       },      
-            "cat14": {
-        title: "제 14과 (준비중)",
+            "cat17": {
+        title: "제 17과 (준비중)",
         disabled: false,
         hidden: true,
         rawData: [],
@@ -9336,8 +9336,8 @@ videoMap: {
         urls: {},
         videoMap: {}
       },      
-            "cat15": {
-        title: "제 14과 (준비중)",
+            "cat18": {
+        title: "제 18과 (준비중)",
         disabled: false,
         hidden: true,
         rawData: [],
