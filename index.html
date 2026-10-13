@@ -972,6 +972,8 @@
 
     .btn-study-filter { background: #059669; color: #fff; flex: 1.1; }
     .btn-study-filter:hover { background: #047857; }
+    .btn-study-quickquiz { background: #d97706; color: #fff; flex: 1.1; }
+    .btn-study-quickquiz:hover { background: #b45309; }
 
     /* 개별 오답/재확인/미체크 복습 버튼 그리드 */
     .review-mode-btn-grid {
@@ -994,6 +996,110 @@
     .btn-review-specific.unknown { color: #dc2626; border-color: #fca5a5; background: #fff5f5; }
     .btn-review-specific.review { color: #d97706; border-color: #fcd34d; background: #fffbeb; }
     .btn-review-specific.unchecked { color: #475569; border-color: #cbd5e1; background: #f8fafc; }
+
+    /* 4지선다 객관식 퀴즈 영역 */
+    .choice-quiz-container {
+      display: none;
+      width: 100%;
+      margin: 12px 0;
+      box-sizing: border-box;
+    }
+    .choice-quiz-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+    .btn-quiz-choice {
+      padding: 14px 10px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+      word-break: break-all;
+    }
+    .btn-quiz-choice:hover:not(:disabled) {
+      border-color: #6366f1;
+      background: #eff6ff;
+      transform: translateY(-2px);
+    }
+    .btn-quiz-choice.correct {
+      border-color: #22c55e !important;
+      background: #dcfce7 !important;
+      color: #15803d !important;
+    }
+    .btn-quiz-choice.wrong {
+      border-color: #ef4444 !important;
+      background: #fee2e2 !important;
+      color: #b91c1c !important;
+    }
+
+    /* 힌트 토글 바 */
+    .hint-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .btn-hint-chip {
+      background: #fefce8;
+      border: 1px solid #fef08a;
+      color: #a16207;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-hint-chip:hover { background: #fef9c3; }
+
+    /* 즉석 팝업 퀴즈 모달 창 */
+    .mini-quiz-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 4500;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .mini-quiz-card {
+      background: #ffffff;
+      border-radius: 22px;
+      max-width: 520px;
+      width: 100%;
+      padding: 22px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      text-align: center;
+      box-sizing: border-box;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .mini-quiz-video-box {
+      width: 100%;
+      height: 220px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mini-quiz-video-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
 
   </style>
 </head>
@@ -1110,12 +1216,13 @@
               🙈 전체 마스킹
             </label>
             <div class="sidebar-order-group">
-              <button id="btnShuffle" class="btn-order-toggle active" onclick="shuffleCurrentList()" title="단어 순서 셔플">🔀 셔플</button>
+              <button id="btnShuffle" class="btn-order-toggle active" onclick="shuffleCurrentList()" title="단어 순서 일반 무작위 셔플">🔀 셔플</button>
+              <button id="btnSmartShuffle" class="btn-order-toggle" onclick="smartWeightedShuffle()" title="망각곡선 스마트 셔플: 틀린/재확인 단어가 2~3배 자주 등장">🧠 스마트</button>
               <button id="btnNumeric" class="btn-order-toggle" onclick="sortCurrentListNumeric()" title="번호순 정렬">🔢 번호순</button>
             </div>
           </div>
           
-          <!-- 상태별 필터 탭 바 -->
+          <!-- 상태별 필터 탭 바 (모름/재확인/완료/미체크 분리) -->
           <div class="sidebar-status-filter" id="sidebarStatusFilter">
             <button type="button" class="btn-stat-filter active" id="flt-all" onclick="setSidebarFilter('all')">전체 (<span id="fltCntAll">0</span>)</button>
             <button type="button" class="btn-stat-filter stat-unknown" id="flt-unknown" onclick="setSidebarFilter('unknown')">모름 (<span id="fltCntUnknown">0</span>)</button>
@@ -1129,6 +1236,7 @@
             <button class="btn-select" onclick="deselectAllFiltered()">선택해제</button>
             <button class="btn-study-custom" onclick="studySelected()">✨ 선택 학습</button>
             <button class="btn-study-filter" onclick="studyFilteredList()" title="현재 필터된 목록만 바로 학습">🎯 필터 학습</button>
+            <button class="btn-study-quickquiz" onclick="openMiniQuizModal()" title="체크된 단어들만 팝업으로 즉석 퀴즈">⚡ 퀵 퀴즈</button>
           </div>
         </div>
 
@@ -1146,8 +1254,10 @@
         <div class="mode-badge-wrap">
           <div class="mode-badge" id="modeName">전체 학습 모드</div>
           <div class="top-mode-switch-group">
-            <button id="btnSwitchTest" class="btn-mode-pill active" onclick="setStudyType('TEST')">📝 시험</button>
-            <button id="btnSwitchVocab" class="btn-mode-pill" onclick="setStudyType('VOCAB')">📖 단어장</button>
+            <button id="btnSwitchTest" class="btn-mode-pill active" onclick="setStudyType('TEST')" title="단어명 보고 수어 동작 떠올리기">📝 단어→수어</button>
+            <button id="btnSwitchReverse" class="btn-mode-pill" onclick="setStudyType('REVERSE')" title="수어 영상 보고 무슨 단어인지 맞추기 (이해력 향상)">🎬 수어→단어</button>
+            <button id="btnSwitchChoice" class="btn-mode-pill" onclick="setStudyType('CHOICE')" title="영상을 보고 4개 보기 중 정답 맞히기">🎲 4지선다</button>
+            <button id="btnSwitchVocab" class="btn-mode-pill" onclick="setStudyType('VOCAB')" title="단어와 영상 바로 확인하기">📖 단어장</button>
           </div>
         </div>
         
@@ -1171,6 +1281,17 @@
             </div>
           </div>
           <div class="top-word-banner-resizer" id="topWordBannerResizer" title="상하로 드래그하여 단어 영역 높이 조절"></div>
+        </div>
+
+        <!-- 수형 힌트 보기 칩 -->
+        <div class="hint-bar" id="hintBarArea">
+          <button type="button" class="btn-hint-chip" onclick="toggleHandHint()">💡 수형 힌트 보기</button>
+          <span id="hintPreviewText" style="font-size:0.8rem; color:#854d0e; font-weight:600; display:none;"></span>
+        </div>
+
+        <!-- 4지선다 객관식 퀴즈 선택지 영역 -->
+        <div class="choice-quiz-container" id="choiceQuizContainer">
+          <div class="choice-quiz-grid" id="choiceQuizGrid"></div>
         </div>
 
         <!-- 듀얼 뷰포트 래퍼 (영상 바로 아래 드래그 조절바 탑재) -->
@@ -1607,7 +1728,6 @@ function loadCurrentUserRecords() {
     Object.assign(statusMap, userProfiles[uid].statusMap || {});
   }
 
-  // 전체 메모 불러오기
   const gInput = document.getElementById('globalMemoInput');
   if (gInput) gInput.value = userProfiles[uid].globalMemo || '';
 
@@ -2247,16 +2367,35 @@ window.saveCurrentUserGlobalMemo = function() {
     function setStudyType(type) {
       studyType = type;
       const btnTest = document.getElementById('btnSwitchTest');
+      const btnReverse = document.getElementById('btnSwitchReverse');
+      const btnChoice = document.getElementById('btnSwitchChoice');
       const btnVocab = document.getElementById('btnSwitchVocab');
+
       if (btnTest) btnTest.className = `btn-mode-pill ${type==='TEST'?'active':''}`;
+      if (btnReverse) btnReverse.className = `btn-mode-pill ${type==='REVERSE'?'active':''}`;
+      if (btnChoice) btnChoice.className = `btn-mode-pill ${type==='CHOICE'?'active':''}`;
       if (btnVocab) btnVocab.className = `btn-mode-pill ${type==='VOCAB'?'active':''}`;
-      
+
       const btnReveal = document.getElementById('btnReveal');
-      if (btnReveal) btnReveal.style.display = type==='TEST' ? 'inline-block' : 'none';
+      if (btnReveal) btnReveal.style.display = (type==='TEST' || type==='REVERSE') ? 'inline-block' : 'none';
+      
+      const choiceBox = document.getElementById('choiceQuizContainer');
+      if (choiceBox) choiceBox.style.display = (type==='CHOICE') ? 'block' : 'none';
+
+      const hintBar = document.getElementById('hintBarArea');
+      if (hintBar) hintBar.style.display = (type==='TEST' || type==='REVERSE') ? 'inline-flex' : 'none';
+
       if (type === 'VOCAB') isRevealed = true;
       else isRevealed = false;
+
       updateCard();
-      showToast(type === 'TEST' ? "📝 시험 모드로 전환되었습니다." : "📖 단어장 모드로 전환되었습니다.");
+      const msgs = {
+        TEST: "📝 표준 시험 모드 (단어명 확인 → 정답 열기)",
+        REVERSE: "🎬 역방향 시험 모드 (수어 영상 시청 → 단어명 맞히기)",
+        CHOICE: "🎲 4지선다 퀴즈 모드 (영상 보고 정답 고르기)",
+        VOCAB: "📖 단어장 모드 (단어 및 영상 전체 공개)"
+      };
+      showToast(msgs[type] || "모드 전환 완료");
     }
 
     function initMobileResizer() {
@@ -2656,6 +2795,41 @@ window.saveCurrentUserGlobalMemo = function() {
       document.getElementById('mUncheckedList').innerText = uncheckedList.length ? uncheckedList.join(', ') : '전부 완료';
     }
 
+    // 헬퍼: 숫자 ID와 단어 문자열 키 모두 완벽 호환 조회
+    function lookupField(mapObj, curItem) {
+      if (!mapObj || !curItem) return '';
+      const curId = curItem.id;
+      const curStrId = String(curId);
+      const curText = curItem.text || '';
+      const cleanText = curText.replace(/^\d+\s*/, '').trim();
+      const firstWord = cleanText.split(',')[0].trim();
+      const origText = curItem.originalText || '';
+
+      return mapObj[curId] !== undefined ? mapObj[curId] :
+             mapObj[curStrId] !== undefined ? mapObj[curStrId] :
+             mapObj[curText] !== undefined ? mapObj[curText] :
+             mapObj[cleanText] !== undefined ? mapObj[cleanText] :
+             mapObj[firstWord] !== undefined ? mapObj[firstWord] :
+             mapObj[origText] !== undefined ? mapObj[origText] : '';
+    }
+
+    function toggleHandHint() {
+      const cat = CATEGORIES[currentCatKey] || {};
+      const current = activeList[currentIndex];
+      if (!current) return;
+      const desc = lookupField(cat.descriptions, current);
+      const hintTextElem = document.getElementById('hintPreviewText');
+      if (!hintTextElem) return;
+
+      if (hintTextElem.style.display === 'none') {
+        const hintPiece = desc ? desc.substring(0, 35) + '...' : '등록된 수형 힌트가 없습니다.';
+        hintTextElem.textContent = `💡 수형 동작 힌트: ${hintPiece}`;
+        hintTextElem.style.display = 'inline';
+      } else {
+        hintTextElem.style.display = 'none';
+      }
+    }
+
     function updateCard() {
       const cat = CATEGORIES[currentCatKey] || {};
       const current = activeList[currentIndex];
@@ -2667,35 +2841,26 @@ window.saveCurrentUserGlobalMemo = function() {
       }
 
       const id = current.id;
-      const strId = String(id);
       const status = statusMap[getWordKey(id)] || 'none';
 
       document.getElementById('progress').innerText = `단어 ${currentIndex + 1} / ${activeList.length}`;
-      document.getElementById('topWordTitle').innerText = `${id}. ${current.text}`;
+      
+      // 힌트 텍스트 초기화
+      const hintTextElem = document.getElementById('hintPreviewText');
+      if (hintTextElem) hintTextElem.style.display = 'none';
+
+      // 1. 단어명 표시 제어 (역방향 시험 모드에서는 정답 열기 전까지 ??? 표시)
+      if (studyType === 'REVERSE' && !isRevealed) {
+        document.getElementById('topWordTitle').innerText = `${id}. ❓ 어떤 수어 동작일까요?`;
+      } else {
+        document.getElementById('topWordTitle').innerText = `${id}. ${current.text}`;
+      }
       
       document.querySelectorAll('.q-mark').forEach(btn => btn.classList.remove('active'));
       if (status === 'known') document.getElementById('qm-known').classList.add('active');
       else if (status === 'unknown') document.getElementById('qm-unknown').classList.add('active');
       else if (status === 'review') document.getElementById('qm-review').classList.add('active');
       else document.getElementById('qm-uncheck').classList.add('active');
-
-      // 헬퍼: 숫자 ID와 단어 문자열 키 모두 완벽 호환 조회
-      function lookupField(mapObj, curItem) {
-        if (!mapObj || !curItem) return '';
-        const curId = curItem.id;
-        const curStrId = String(curId);
-        const curText = curItem.text || '';
-        const cleanText = curText.replace(/^\d+\s*/, '').trim();
-        const firstWord = cleanText.split(',')[0].trim();
-        const origText = curItem.originalText || '';
-
-        return mapObj[curId] !== undefined ? mapObj[curId] :
-               mapObj[curStrId] !== undefined ? mapObj[curStrId] :
-               mapObj[curText] !== undefined ? mapObj[curText] :
-               mapObj[cleanText] !== undefined ? mapObj[cleanText] :
-               mapObj[firstWord] !== undefined ? mapObj[firstWord] :
-               mapObj[origText] !== undefined ? mapObj[origText] : '';
-      }
 
       const dictMediaTarget = document.getElementById('dictMediaTarget');
       let rawVids = lookupField(cat.videoMap, current);
@@ -2707,6 +2872,7 @@ window.saveCurrentUserGlobalMemo = function() {
 
       const detailContent = document.getElementById('detailContent');
 
+      // 2. 미디어 및 설명창 표시 제어 (표준 시험 모드 vs 역방향/단어장/4지선다 모드)
       if (studyType === 'TEST' && !isRevealed) {
         dictMediaTarget.innerHTML = `<div style="color:#94a3b8; font-size:1.15rem; font-weight:bold;">🎬 [정답 확인]을 누르면 표준 수어 영상이 재생됩니다.</div>`;
         detailContent.innerHTML = `<div style="color:#64748b; font-size:1rem; font-weight:600;">[Space] 또는 [정답] 버튼을 누르면 상세 설명이 열립니다.</div>`;
@@ -2722,17 +2888,26 @@ window.saveCurrentUserGlobalMemo = function() {
         const combText = lookupField(cat.combinations, current);
         const linkUrl = lookupField(cat.urls, current);
 
-        detailContent.innerHTML = `
-          <div class="answer-container">
-            ${descText ? `<div class="desc-text">📖 <b>동작 설명:</b> ${descText}</div>` : ''}
-            ${combText ? `<div class="desc-text" style="background:#eef2ff; color:#3730a3;">🔗 <b>단어 결합:</b> ${combText}</div>` : ''}
-            ${linkUrl ? `<div class="dict-link-wrap"><a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="dict-link-btn">🌐 국립국어원 사전 상세페이지 보기 ↗</a></div>` : ''}
-          </div>
-        `;
+        if (studyType === 'REVERSE' && !isRevealed) {
+          detailContent.innerHTML = `<div style="color:#64748b; font-size:1rem; font-weight:600;">영상을 보고 단어명을 맞힌 후 [Space/정답]을 누르세요.</div>`;
+        } else {
+          detailContent.innerHTML = `
+            <div class="answer-container">
+              ${descText ? `<div class="desc-text">📖 <b>동작 설명:</b> ${descText}</div>` : ''}
+              ${combText ? `<div class="desc-text" style="background:#eef2ff; color:#3730a3;">🔗 <b>단어 결합:</b> ${combText}</div>` : ''}
+              ${linkUrl ? `<div class="dict-link-wrap"><a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="dict-link-btn">🌐 국립국어원 사전 상세페이지 보기 ↗</a></div>` : ''}
+            </div>
+          `;
+        }
+      }
+
+      // 3. 4지선다 퀴즈 선택지 렌더링
+      if (studyType === 'CHOICE') {
+        renderChoiceQuizButtons(current);
       }
 
       const autoPlayCheck = document.getElementById('autoPlayTts');
-      if (autoPlayCheck && autoPlayCheck.checked) {
+      if (autoPlayCheck && autoPlayCheck.checked && (studyType !== 'REVERSE' || isRevealed)) {
         speakCurrentWord(() => { initTimers(); });
       } else {
         initTimers();
@@ -2740,7 +2915,7 @@ window.saveCurrentUserGlobalMemo = function() {
 
       updateStats();
       updateSidebarActive();
-      loadCurrentWordMemo(); // 단어가 바뀔 때마다 해당 단어 메모 로드
+      loadCurrentWordMemo();
     }
 
     function toggleAnswer(isAuto = false) {
@@ -2790,7 +2965,129 @@ window.saveCurrentUserGlobalMemo = function() {
       showToast(`${min}번부터 ${max}번까지 선택되었습니다.`);
     }
 
-    let currentSidebarFilter = 'all'; // 'all', 'unknown', 'review', 'known', 'none'
+
+    // --- 4지선다 객관식 퀴즈 로직 --- //
+    function renderChoiceQuizButtons(current) {
+      const grid = document.getElementById('choiceQuizGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      // 오답 보기 3개 랜덤 추출
+      const otherWords = wordList.filter(w => w.id !== current.id);
+      shuffleArray(otherWords);
+      const foils = otherWords.slice(0, 3);
+      const choices = [current, ...foils];
+      shuffleArray(choices);
+
+      choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-quiz-choice';
+        btn.textContent = c.text.split(',')[0].trim();
+        btn.onclick = () => handleChoiceAnswer(btn, c.id === current.id);
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleChoiceAnswer(btn, isCorrect) {
+      const allBtns = document.querySelectorAll('.btn-quiz-choice');
+      allBtns.forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        showToast("🎉 정답입니다!");
+        markCurrent('known');
+      } else {
+        btn.classList.add('wrong');
+        showToast("❌ 아쉽습니다. 오답으로 체크되었습니다.");
+        markCurrent('unknown');
+      }
+    }
+
+    // --- 망각곡선 스마트 가중치 셔플 로직 --- //
+    window.smartWeightedShuffle = function() {
+      clearAllTimers();
+      // 가중치: 모름(3점), 재확인(2점), 미체크(1.5점), 완료(0.5점)
+      const scored = activeList.map(item => {
+        const st = statusMap[getWordKey(item.id)] || 'none';
+        let weight = 1.5;
+        if (st === 'unknown') weight = 3.5;
+        else if (st === 'review') weight = 2.2;
+        else if (st === 'known') weight = 0.4;
+        return { item, sortKey: Math.random() / weight };
+      });
+      scored.sort((a, b) => a.sortKey - b.sortKey);
+      activeList = scored.map(s => s.item);
+      currentIndex = 0;
+      isShuffled = true;
+
+      document.querySelectorAll('.sidebar-order-group button').forEach(b => b.classList.remove('active'));
+      document.getElementById('btnSmartShuffle').classList.add('active');
+
+      updateCard();
+      renderSidebar();
+      showToast("🧠 망각곡선 스마트 셔플 적용 (취약 단어 우선 노출)");
+    };
+
+    // --- 선택 단어 즉석 미니 퀴즈 팝업 로직 --- //
+    let miniQuizList = [];
+    let miniQuizIndex = 0;
+
+    window.openMiniQuizModal = function() {
+      if (selectedWords.size === 0) {
+        alert("체크박스로 퀴즈를 볼 단어를 1개 이상 선택해주세요.");
+        return;
+      }
+      miniQuizList = wordList.filter(w => selectedWords.has(w.id));
+      shuffleArray(miniQuizList);
+      miniQuizIndex = 0;
+
+      const modal = document.getElementById('miniQuizModal');
+      if (modal) modal.style.display = 'flex';
+      renderMiniQuizQuestion();
+    };
+
+    window.closeMiniQuizModal = function() {
+      const modal = document.getElementById('miniQuizModal');
+      if (modal) modal.style.display = 'none';
+      const vid = document.getElementById('miniQuizVideo');
+      if (vid) vid.pause();
+    };
+
+    function renderMiniQuizQuestion() {
+      if (miniQuizIndex >= miniQuizList.length) {
+        alert("🎉 선택한 모든 단어의 퀴즈를 완료했습니다!");
+        closeMiniQuizModal();
+        return;
+      }
+
+      const cur = miniQuizList[miniQuizIndex];
+      const cat = CATEGORIES[currentCatKey] || {};
+      document.getElementById('miniQuizProgress').textContent = `문제 ${miniQuizIndex + 1} / ${miniQuizList.length}`;
+      document.getElementById('miniQuizWordTitle').textContent = `${cur.id}. ${cur.text.split(',')[0].trim()}`;
+
+      let rawVids = lookupField(cat.videoMap, cur);
+      let vidSrc = rawVids ? (Array.isArray(rawVids) ? rawVids[0] : rawVids) : null;
+      const vidElem = document.getElementById('miniQuizVideo');
+      if (vidSrc && vidElem) {
+        vidElem.src = vidSrc.replace(/^http:\/\//i, 'https://');
+        vidElem.play().catch(() => {});
+      }
+    }
+
+    window.markMiniQuiz = function(type) {
+      if (miniQuizIndex >= miniQuizList.length) return;
+      const cur = miniQuizList[miniQuizIndex];
+      statusMap[getWordKey(cur.id)] = type;
+      syncUserRecords();
+      updateStats();
+      renderSidebar();
+
+      miniQuizIndex++;
+      renderMiniQuizQuestion();
+    };
+
+    let currentSidebarFilter = 'all';
 
     window.setSidebarFilter = function(filterVal) {
       currentSidebarFilter = filterVal;
@@ -2808,7 +3105,6 @@ window.saveCurrentUserGlobalMemo = function() {
       sidebarList.innerHTML = '';
       const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
 
-      // 카테고리 전체 단어 기준 카운트 계산
       let cntAll = wordList.length;
       let cntUnknown = 0, cntReview = 0, cntKnown = 0, cntNone = 0;
       wordList.forEach(w => {
@@ -2819,7 +3115,6 @@ window.saveCurrentUserGlobalMemo = function() {
         else cntNone++;
       });
 
-      // 사이드바 필터 뱃지 숫자 갱신
       const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
       setTxt('fltCntAll', cntAll);
       setTxt('fltCntUnknown', cntUnknown);
@@ -2827,12 +3122,10 @@ window.saveCurrentUserGlobalMemo = function() {
       setTxt('fltCntKnown', cntKnown);
       setTxt('fltCntNone', cntNone);
 
-      // 메인 카드 복습 버튼 카운트 갱신
       setTxt('btnCntUnknown', cntUnknown);
       setTxt('btnCntReview', cntReview);
       setTxt('btnCntNone', cntNone);
 
-      // 필터 적용 (현재 활성 목록 또는 전체 목록 기준 필터링)
       let displayList = (currentMode === 'FULL' || currentMode.startsWith('REVIEW')) ? [...wordList] : [...activeList];
 
       if (currentSidebarFilter !== 'all') {
@@ -2871,7 +3164,6 @@ window.saveCurrentUserGlobalMemo = function() {
       });
     }
 
-    // 현재 사이드바에 필터링되어 보이는 단어들만 즉시 학습 모드로 실행
     window.studyFilteredList = function() {
       const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
       let targets = wordList.filter(item => {
@@ -2904,7 +3196,6 @@ window.saveCurrentUserGlobalMemo = function() {
       showToast(`🎯 필터된 ${activeList.length}개 단어 맞춤 학습 시작!`);
     };
 
-    // 모름만 / 재확인만 / 미체크 단어만 개별 복습 모드 진입 함수
     window.startSpecificReviewMode = function(filterType) {
       let targets = [];
       let modeNameText = '';
@@ -2996,12 +3287,11 @@ window.saveCurrentUserGlobalMemo = function() {
     }
     
     function resetAll() {
-      if (confirm("현재 카테고리의 모든 채점 상태를 초기화할까요?")) {
+      if (confirm("모든 채점 상태를 초기화할까요?")) {
         clearAllTimers();
         wordList.forEach(w => delete statusMap[getWordKey(w.id)]);
-        syncUserRecords(); // 초기화 즉시 캐시/로컬스토리지에 반영
         loadCategoryData();
-        showToast("현재 카테고리 마킹 상태를 초기화했습니다.");
+        showToast("마킹 상태를 초기화했습니다.");
       }
     }
     
@@ -3117,5 +3407,31 @@ window.saveCurrentUserGlobalMemo = function() {
       loadVoices();
     };
   </script>
+
+  <!-- 선택 단어 즉석 미니 퀴즈 팝업 모달 -->
+  <div class="mini-quiz-overlay" id="miniQuizModal">
+    <div class="mini-quiz-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #e2e8f0; padding-bottom:8px;">
+        <h3 style="margin:0; font-size:1.15rem; color:#0f172a;">⚡ 선택 단어 즉석 퀵 퀴즈</h3>
+        <button type="button" onclick="closeMiniQuizModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+
+      <div style="font-size:0.85rem; font-weight:700; color:#6366f1;" id="miniQuizProgress">문제 1 / 5</div>
+      <div style="font-size:1.2rem; font-weight:800; color:#1e293b;" id="miniQuizWordTitle">단어명</div>
+
+      <div class="mini-quiz-video-box">
+        <video id="miniQuizVideo" controls autoplay muted playsinline></video>
+      </div>
+
+      <div class="choice-quiz-grid" id="miniQuizChoiceGrid"></div>
+
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button type="button" class="btn-mark-known" style="flex:1;" onclick="markMiniQuiz('known')">아는 문제 [1]</button>
+        <button type="button" class="btn-mark-unknown" style="flex:1;" onclick="markMiniQuiz('unknown')">모르는 문제 [2]</button>
+        <button type="button" class="btn-mark-review" style="flex:1;" onclick="markMiniQuiz('review')">재확인 [3]</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
