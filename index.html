@@ -928,6 +928,73 @@
 .memo-textarea:focus {
   border-color: #6366f1;
 }
+  
+    /* 사이드바 상태 필터 탭 (전체/모름/재확인/완료/미체크) */
+    .sidebar-status-filter {
+      display: flex;
+      gap: 3px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      margin-bottom: 8px;
+      overflow-x: auto;
+    }
+    .btn-stat-filter {
+      flex: 1;
+      min-width: fit-content;
+      padding: 4px 6px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .btn-stat-filter:hover { background: #e2e8f0; }
+    .btn-stat-filter.active {
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .btn-stat-filter.stat-unknown { color: #dc2626; }
+    .btn-stat-filter.stat-unknown.active { background: #fee2e2; border-color: #fca5a5; }
+    .btn-stat-filter.stat-review { color: #d97706; }
+    .btn-stat-filter.stat-review.active { background: #fef3c7; border-color: #fcd34d; }
+    .btn-stat-filter.stat-known { color: #16a34a; }
+    .btn-stat-filter.stat-known.active { background: #dcfce7; border-color: #86efac; }
+    .btn-stat-filter.stat-none { color: #64748b; }
+    .btn-stat-filter.stat-none.active { background: #f1f5f9; border-color: #cbd5e1; }
+
+    .btn-study-filter { background: #059669; color: #fff; flex: 1.1; }
+    .btn-study-filter:hover { background: #047857; }
+
+    /* 개별 오답/재확인/미체크 복습 버튼 그리드 */
+    .review-mode-btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .btn-review-specific {
+      padding: 8px 4px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-review-specific:hover { transform: translateY(-1px); }
+    .btn-review-specific.unknown { color: #dc2626; border-color: #fca5a5; background: #fff5f5; }
+    .btn-review-specific.review { color: #d97706; border-color: #fcd34d; background: #fffbeb; }
+    .btn-review-specific.unchecked { color: #475569; border-color: #cbd5e1; background: #f8fafc; }
+
   </style>
 </head>
 <body>
@@ -1048,10 +1115,20 @@
             </div>
           </div>
           
+          <!-- 상태별 필터 탭 바 -->
+          <div class="sidebar-status-filter" id="sidebarStatusFilter">
+            <button type="button" class="btn-stat-filter active" id="flt-all" onclick="setSidebarFilter('all')">전체 (<span id="fltCntAll">0</span>)</button>
+            <button type="button" class="btn-stat-filter stat-unknown" id="flt-unknown" onclick="setSidebarFilter('unknown')">모름 (<span id="fltCntUnknown">0</span>)</button>
+            <button type="button" class="btn-stat-filter stat-review" id="flt-review" onclick="setSidebarFilter('review')">재확인 (<span id="fltCntReview">0</span>)</button>
+            <button type="button" class="btn-stat-filter stat-known" id="flt-known" onclick="setSidebarFilter('known')">완료 (<span id="fltCntKnown">0</span>)</button>
+            <button type="button" class="btn-stat-filter stat-none" id="flt-none" onclick="setSidebarFilter('none')">미체크 (<span id="fltCntNone">0</span>)</button>
+          </div>
+
           <div class="sidebar-actions">
             <button class="btn-select" onclick="selectAllFiltered()">전체선택</button>
             <button class="btn-select" onclick="deselectAllFiltered()">선택해제</button>
             <button class="btn-study-custom" onclick="studySelected()">✨ 선택 학습</button>
+            <button class="btn-study-filter" onclick="studyFilteredList()" title="현재 필터된 목록만 바로 학습">🎯 필터 학습</button>
           </div>
         </div>
 
@@ -1167,7 +1244,13 @@
         </div>
 
         <button class="btn-start" onclick="startLearning()">▶️ 처음부터 새로 학습 시작 (셔플) [N]</button>
-        <button class="btn-review-mode" id="btnReviewMode" onclick="startReviewMode()">✏️ 오답노트(모름/재확인) 진입 [O]</button>
+        <!-- 세분화된 오답/재확인/미체크 복습 버튼 그리드 -->
+        <div class="review-mode-btn-grid" id="reviewSpecificGroup">
+          <button class="btn-review-specific unknown" onclick="startSpecificReviewMode('unknown')" title="모르는 단어만 모아서 집중 복습">❌ 모름 복습 (<span id="btnCntUnknown">0</span>)</button>
+          <button class="btn-review-specific review" onclick="startSpecificReviewMode('review')" title="재확인 단어만 모아서 집중 복습">⚠️ 재확인 복습 (<span id="btnCntReview">0</span>)</button>
+          <button class="btn-review-specific unchecked" onclick="startSpecificReviewMode('none')" title="아직 한 번도 안 본 단어만 학습">⚪ 미체크 단어 (<span id="btnCntNone">0</span>)</button>
+        </div>
+        <button class="btn-review-mode" id="btnReviewMode" onclick="startReviewMode()">✏️ 통합 오답노트(모름+재확인) 진입 [O]</button>
         <button class="btn-full-mode" id="btnFullMode" onclick="returnToFullMode()" style="display: none;">🏠 전체메뉴로 돌아가기 [I]</button>
         
         <button class="btn-pause" onclick="togglePauseModal()">⏸️ 중간 결과 및 미체크 문제 확인 [P]</button>
@@ -1513,18 +1596,20 @@ window.updateTopNicknameDisplay = function() {
 // 3. 기록 동기화
 function loadCurrentUserRecords() {
   if (currentUserId === ADMIN_KEYWORD) return;
-  if (!userProfiles[currentUserId]) {
-    userProfiles[currentUserId] = { statusMap: {}, wordMemos: {}, globalMemo: '' };
+  const uid = currentUserId || '게스트';
+  if (!userProfiles[uid]) {
+    userProfiles[uid] = { statusMap: {}, wordMemos: {}, globalMemo: '', createdAt: new Date().toISOString() };
+    saveAllProfiles();
   }
   
   if (typeof statusMap !== 'undefined') {
     Object.keys(statusMap).forEach(k => delete statusMap[k]);
-    Object.assign(statusMap, userProfiles[currentUserId].statusMap || {});
+    Object.assign(statusMap, userProfiles[uid].statusMap || {});
   }
 
   // 전체 메모 불러오기
   const gInput = document.getElementById('globalMemoInput');
-  if (gInput) gInput.value = userProfiles[currentUserId].globalMemo || '';
+  if (gInput) gInput.value = userProfiles[uid].globalMemo || '';
 
   loadCurrentWordMemo();
 
@@ -1534,12 +1619,13 @@ function loadCurrentUserRecords() {
 }
 
 function syncUserRecords() {
-  if (currentUserId === ADMIN_KEYWORD || currentUserId === '게스트') return;
-  if (!userProfiles[currentUserId]) {
-    userProfiles[currentUserId] = { statusMap: {}, wordMemos: {}, globalMemo: '' };
+  if (currentUserId === ADMIN_KEYWORD) return;
+  const uid = currentUserId || '게스트';
+  if (!userProfiles[uid]) {
+    userProfiles[uid] = { statusMap: {}, wordMemos: {}, globalMemo: '', createdAt: new Date().toISOString() };
   }
-  userProfiles[currentUserId].statusMap = { ...statusMap };
-  userProfiles[currentUserId].updatedAt = new Date().toISOString();
+  userProfiles[uid].statusMap = { ...statusMap };
+  userProfiles[uid].updatedAt = new Date().toISOString();
   saveAllProfiles();
 }
 
@@ -1760,7 +1846,7 @@ window.saveCurrentUserGlobalMemo = function() {
         isShuffled: true,
         currentMode: 'FULL',
         studyType: 'TEST',
-        statusMap: {},
+        statusMap: JSON.parse(JSON.stringify(statusMap || {})),
         selectedWords: new Set(),
         hiddenWords: new Set(),
         isGlobalHidden: false
@@ -2315,9 +2401,14 @@ window.saveCurrentUserGlobalMemo = function() {
 
     function loadCategoryData() {
       const cat = CATEGORIES[currentCatKey] || { rawData: [] };
-      wordList = (cat.rawData || []).map(item => {
-        const m = item.match(/^(\d+)\s*(.*)/);
-        return m ? { id: parseInt(m[1]), text: m[2] } : { id: 0, text: item };
+      wordList = (cat.rawData || []).map((item, idx) => {
+        const str = String(item).trim();
+        const m = str.match(/^(\d+)\s*(.*)/);
+        if (m) {
+          return { id: parseInt(m[1]), text: m[2] || str, originalText: str };
+        } else {
+          return { id: idx + 1, text: str, originalText: str };
+        }
       });
       fullActiveList = [...wordList];
       if (isShuffled) shuffleArray(fullActiveList);
@@ -2588,8 +2679,26 @@ window.saveCurrentUserGlobalMemo = function() {
       else if (status === 'review') document.getElementById('qm-review').classList.add('active');
       else document.getElementById('qm-uncheck').classList.add('active');
 
+      // 헬퍼: 숫자 ID와 단어 문자열 키 모두 완벽 호환 조회
+      function lookupField(mapObj, curItem) {
+        if (!mapObj || !curItem) return '';
+        const curId = curItem.id;
+        const curStrId = String(curId);
+        const curText = curItem.text || '';
+        const cleanText = curText.replace(/^\d+\s*/, '').trim();
+        const firstWord = cleanText.split(',')[0].trim();
+        const origText = curItem.originalText || '';
+
+        return mapObj[curId] !== undefined ? mapObj[curId] :
+               mapObj[curStrId] !== undefined ? mapObj[curStrId] :
+               mapObj[curText] !== undefined ? mapObj[curText] :
+               mapObj[cleanText] !== undefined ? mapObj[cleanText] :
+               mapObj[firstWord] !== undefined ? mapObj[firstWord] :
+               mapObj[origText] !== undefined ? mapObj[origText] : '';
+      }
+
       const dictMediaTarget = document.getElementById('dictMediaTarget');
-      let rawVids = cat.videoMap ? (cat.videoMap[id] || cat.videoMap[strId]) : null;
+      let rawVids = lookupField(cat.videoMap, current);
       let vidSrc = null;
       if (rawVids) {
         vidSrc = Array.isArray(rawVids) ? rawVids[0] : rawVids;
@@ -2609,9 +2718,9 @@ window.saveCurrentUserGlobalMemo = function() {
           dictMediaTarget.innerHTML = `<div style="color:#ef4444; font-weight:bold;">등록된 표준 수어 영상이 없습니다.</div>`;
         }
 
-        const descText = cat.descriptions ? (cat.descriptions[id] || cat.descriptions[strId]) : '';
-        const combText = cat.combinations ? (cat.combinations[id] || cat.combinations[strId]) : '';
-        const linkUrl = cat.urls ? (cat.urls[id] || cat.urls[strId]) : '';
+        const descText = lookupField(cat.descriptions, current);
+        const combText = lookupField(cat.combinations, current);
+        const linkUrl = lookupField(cat.urls, current);
 
         detailContent.innerHTML = `
           <div class="answer-container">
@@ -2681,12 +2790,57 @@ window.saveCurrentUserGlobalMemo = function() {
       showToast(`${min}번부터 ${max}번까지 선택되었습니다.`);
     }
 
+    let currentSidebarFilter = 'all'; // 'all', 'unknown', 'review', 'known', 'none'
+
+    window.setSidebarFilter = function(filterVal) {
+      currentSidebarFilter = filterVal;
+      document.querySelectorAll('.btn-stat-filter').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`flt-${filterVal}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderSidebar();
+      const labels = { all: '전체', unknown: '모르는', review: '재확인', known: '완료된', none: '미체크' };
+      showToast(`목록 필터: ${labels[filterVal] || ''} 단어`);
+    };
+
     function renderSidebar() {
       const sidebarList = document.getElementById('sidebarList');
+      if (!sidebarList) return;
       sidebarList.innerHTML = '';
       const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
 
-      let displayList = [...activeList];
+      // 카테고리 전체 단어 기준 카운트 계산
+      let cntAll = wordList.length;
+      let cntUnknown = 0, cntReview = 0, cntKnown = 0, cntNone = 0;
+      wordList.forEach(w => {
+        const st = statusMap[getWordKey(w.id)] || 'none';
+        if (st === 'known') cntKnown++;
+        else if (st === 'unknown') cntUnknown++;
+        else if (st === 'review') cntReview++;
+        else cntNone++;
+      });
+
+      // 사이드바 필터 뱃지 숫자 갱신
+      const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setTxt('fltCntAll', cntAll);
+      setTxt('fltCntUnknown', cntUnknown);
+      setTxt('fltCntReview', cntReview);
+      setTxt('fltCntKnown', cntKnown);
+      setTxt('fltCntNone', cntNone);
+
+      // 메인 카드 복습 버튼 카운트 갱신
+      setTxt('btnCntUnknown', cntUnknown);
+      setTxt('btnCntReview', cntReview);
+      setTxt('btnCntNone', cntNone);
+
+      // 필터 적용 (현재 활성 목록 또는 전체 목록 기준 필터링)
+      let displayList = (currentMode === 'FULL' || currentMode.startsWith('REVIEW')) ? [...wordList] : [...activeList];
+
+      if (currentSidebarFilter !== 'all') {
+        displayList = displayList.filter(item => {
+          const st = statusMap[getWordKey(item.id)] || 'none';
+          return st === currentSidebarFilter;
+        });
+      }
 
       displayList.forEach((item) => {
         if (query && !item.text.toLowerCase().includes(query)) return;
@@ -2716,6 +2870,82 @@ window.saveCurrentUserGlobalMemo = function() {
         sidebarList.appendChild(div);
       });
     }
+
+    // 현재 사이드바에 필터링되어 보이는 단어들만 즉시 학습 모드로 실행
+    window.studyFilteredList = function() {
+      const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
+      let targets = wordList.filter(item => {
+        if (query && !item.text.toLowerCase().includes(query)) return false;
+        if (currentSidebarFilter !== 'all') {
+          const st = statusMap[getWordKey(item.id)] || 'none';
+          return st === currentSidebarFilter;
+        }
+        return true;
+      });
+
+      if (targets.length === 0) {
+        alert("현재 필터 조건에 해당하는 단어가 없습니다.");
+        return;
+      }
+
+      clearAllTimers();
+      currentMode = 'FILTERED';
+      activeList = [...targets];
+      if (isShuffled) shuffleArray(activeList);
+      currentIndex = 0;
+
+      document.getElementById('btnFullMode').style.display = 'inline-block';
+      const labels = { all: '전체', unknown: '모름', review: '재확인', known: '완료', none: '미체크' };
+      document.getElementById('modeName').innerText = `🎯 [${labels[currentSidebarFilter] || ''}] 필터 학습 (${activeList.length}개)`;
+      document.getElementById('modeName').className = 'mode-badge custom';
+
+      updateCard();
+      renderSidebar();
+      showToast(`🎯 필터된 ${activeList.length}개 단어 맞춤 학습 시작!`);
+    };
+
+    // 모름만 / 재확인만 / 미체크 단어만 개별 복습 모드 진입 함수
+    window.startSpecificReviewMode = function(filterType) {
+      let targets = [];
+      let modeNameText = '';
+
+      if (filterType === 'unknown') {
+        targets = wordList.filter(w => statusMap[getWordKey(w.id)] === 'unknown');
+        modeNameText = '❌ 모르는 단어 집중 복습';
+      } else if (filterType === 'review') {
+        targets = wordList.filter(w => statusMap[getWordKey(w.id)] === 'review');
+        modeNameText = '⚠️ 재확인 단어 집중 복습';
+      } else if (filterType === 'none') {
+        targets = wordList.filter(w => !statusMap[getWordKey(w.id)] || statusMap[getWordKey(w.id)] === 'none');
+        modeNameText = '⚪ 미체크 단어 학습';
+      } else {
+        return startReviewMode();
+      }
+
+      if (targets.length === 0) {
+        const labels = { unknown: '모르는', review: '재확인', none: '미체크' };
+        alert(`${labels[filterType] || ''} 단어가 없습니다.`);
+        return;
+      }
+
+      clearAllTimers();
+      currentMode = 'REVIEW_' + filterType.toUpperCase();
+      activeList = [...targets];
+      if (isShuffled) shuffleArray(activeList);
+      else activeList.sort((a, b) => a.id - b.id);
+
+      currentIndex = 0;
+      if (studyType === 'VOCAB') isRevealed = true;
+
+      document.getElementById('btnFullMode').style.display = 'inline-block';
+      document.getElementById('modeName').innerText = `${modeNameText} (${activeList.length}개)`;
+      document.getElementById('modeName').className = 'mode-badge review';
+
+      updateOrderButtonUI();
+      updateCard();
+      renderSidebar();
+      showToast(`${modeNameText} 시작!`);
+    };
 
     function jumpToWord(id) {
       clearAllTimers();
@@ -2766,11 +2996,12 @@ window.saveCurrentUserGlobalMemo = function() {
     }
     
     function resetAll() {
-      if (confirm("모든 채점 상태를 초기화할까요?")) {
+      if (confirm("현재 카테고리의 모든 채점 상태를 초기화할까요?")) {
         clearAllTimers();
         wordList.forEach(w => delete statusMap[getWordKey(w.id)]);
+        syncUserRecords(); // 초기화 즉시 캐시/로컬스토리지에 반영
         loadCategoryData();
-        showToast("마킹 상태를 초기화했습니다.");
+        showToast("현재 카테고리 마킹 상태를 초기화했습니다.");
       }
     }
     
